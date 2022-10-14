@@ -116,7 +116,6 @@ const DatalandPage: FunctionComponent = ()=>{
           })
     },[])
     useEffect(()=>{
-        // setSpec(s=>())
         if(spec && 'vegaEmbed' in window){
             const vegaEmbed = (window as typeof window & {vegaEmbed:any}).vegaEmbed
             vegaEmbed('#vis',spec);
@@ -158,7 +157,7 @@ const DatalandPage: FunctionComponent = ()=>{
                                 <Select
                                 labelId="select-mark"
                                 id="demo-simple-select"
-                                value={algorithm}
+                                value={location}
                                 label="Select the algorithm you want to explore."
                                 onChange={(e)=>setLocation(e.target.value)}
                                 >
