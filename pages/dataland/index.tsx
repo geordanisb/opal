@@ -21,8 +21,9 @@ const DatalandPage: FunctionComponent = ()=>{
     const [from,setFrom] = useState<Date>()
     const [to,setTo] = useState<Date>()
     const [spec,setSpec] = useState<Record<string,any>>()
-
+    const [rendred,setRendered] = useState(false)
     useEffect(()=>{
+        
         setSpec({
             "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
             "width": window.innerWidth/3,
@@ -30,7 +31,7 @@ const DatalandPage: FunctionComponent = ()=>{
             "layer": [
               {
                 "data": {
-                  "url": "https://vega.github.io/editor/data/us-10m.json",
+                  "url": "/data/us-10m.json",
                   "format": {
                     "type": "topojson",
                     "feature": "states"
@@ -47,7 +48,7 @@ const DatalandPage: FunctionComponent = ()=>{
               },
               {
                 "data": {
-                  "url": "https://vega.github.io/editor/data/airports.csv"
+                  "url": "/data/airports.csv"
                 },
                 "projection": {
                   "type": "albersUsa"
@@ -68,7 +69,7 @@ const DatalandPage: FunctionComponent = ()=>{
               },
               {
                 "data": {
-                  "url": "https://vega.github.io/editor/data/flights-airport.csv"
+                  "url": "/data/flights-airport.csv"
                 },
                 "transform": [
                   {"filter": {"field": "origin", "equal": "SEA"}},
@@ -76,7 +77,7 @@ const DatalandPage: FunctionComponent = ()=>{
                     "lookup": "origin",
                     "from": {
                       "data": {
-                        "url": "https://vega.github.io/editor/data/airports.csv"
+                        "url": "/data/airports.csv"
                       },
                       "key": "iata",
                       "fields": ["latitude", "longitude"]
@@ -87,7 +88,7 @@ const DatalandPage: FunctionComponent = ()=>{
                     "lookup": "destination",
                     "from": {
                       "data": {
-                        "url": "https://vega.github.io/editor/data/airports.csv"
+                        "url": "/data/airports.csv"
                       },
                       "key": "iata",
                       "fields": ["latitude", "longitude"]
@@ -118,12 +119,41 @@ const DatalandPage: FunctionComponent = ()=>{
     useEffect(()=>{
         if(spec && 'vegaEmbed' in window){
             const vegaEmbed = (window as typeof window & {vegaEmbed:any}).vegaEmbed
-            vegaEmbed('#vis',spec);
+            vegaEmbed('#vis',spec,{renderer: 'svg'}).then(()=>{
+                if('d3' in window){
+                    const d3 = (window as typeof window & {d3:any}).d3 
+                    d3.json('/data/us-10m.json').then(data=>{
+                        d3.selectAll('.layer_0_marks > path').attr('class',(d)=>{
+                            return `state path-${d.bounds.x1.toString().replace(/\./g,'')}`
+                        })
+                        .on('mouseenter',(e,d)=>{
+                            const {x1,y1,x2,y2} = d.bounds;
+                            d3.select('.info-panel').html(`
+                                <b>x1</b>: ${x1.toFixed(2)}, <b>y1</b>: ${y1.toFixed(2)} | <b>x2</b>: ${x2.toFixed(2)}, <b>y2</b>: ${y2.toFixed(2)}
+                            `)
+                            const c = `path-${d.bounds.x1.toString().replace(/\./g,'')}`
+                            d3.select(`.${c}`).style('fill','#1976d2')
+                        })
+                        .on('mouseleave',(e,d)=>{
+                            d3.selectAll('.layer_0_marks > path').style('fill','lightgray')
+                        })
+                    })
+                }
+
+            });
+
         }
       },[spec])
-
+      
 
     return <Container>
+        <style jsx global>
+            {`
+                .state{
+                    transition: fill .8s;
+                }
+            `}
+        </style>
                 <Grid container spacing={2}sx={{paddingBottom:'6em'}} >
                     <Grid item xs={12} md={4} >
                         <Box >
@@ -214,6 +244,12 @@ const DatalandPage: FunctionComponent = ()=>{
                             <Typography fontStyle={'italic'}>{algoritmMap[algorithm].name}: {algoritmMap[algorithm].description}</Typography>
                             <Divider sx={{margin:'.5em 0'}} />
                             <Box>
+                                <Typography fontWeight={'bold'}>
+                                USA Seatle's airport flys to other airports
+                                </Typography>
+                                <Typography fontStyle={'italic'} color='primary' className='info-panel'>
+
+                                </Typography>
                                 <div id="vis"></div>
                             </Box>
                         </Box>
