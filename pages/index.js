@@ -248,7 +248,7 @@ export default function Home() {
     </>
   }
   return <>
-    {/* <Box  sx={{
+     <Box  sx={{
       padding:'2em',
     }}>
       <Grid container>
@@ -284,6 +284,6 @@ export default function Home() {
           <div id="vis3"></div>
         </Grid>
       </Grid>
-    </Box> */}
+    </Box> 
   </>
 }
