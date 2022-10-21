@@ -34,7 +34,7 @@ const DatalandPage: FunctionComponent<Props> = ({neighborhoods})=>{
         </style>
                 <Grid container spacing={2}sx={{paddingBottom:'16em'}} >
                     <Grid item xs={12} >
-                        <Typography color='skyblue' fontWeight={'bold'} textTransform={'uppercase'} variant='h6' sx={{margin:'.5em 0 0'}}>Districts</Typography>
+                        <Typography color='skyblue' fontWeight={'bold'} textTransform={'uppercase'} variant='h6' sx={{margin:'.5em 0 0'}}>Neighborhoods</Typography>
 
                         <Box>
                         <div style={{ height: 500, width: '100%' }}>
