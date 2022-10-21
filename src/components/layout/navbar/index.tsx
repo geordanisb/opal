@@ -111,6 +111,16 @@ const NavBar = () => {
                       <Typography textAlign="center">{'Dataland'}</Typography>
                   </MenuItem>
                 </Link>
+                <Link href="/district">
+                  <MenuItem key={'Districts'}>
+                      <Typography textAlign="center">{'Districts'}</Typography>
+                  </MenuItem>
+                </Link>
+                <Link href="/neighborhood">
+                  <MenuItem key={'Neighborhoods'}>
+                      <Typography textAlign="center">{'Neighborhoods'}</Typography>
+                  </MenuItem>
+                </Link>
               </Menu>
             </Box>
             {/* <AdbIcon sx={{ display: { xs: 'flex', md: 'none' }, mr: 1 }} /> */}
@@ -141,6 +151,23 @@ const NavBar = () => {
                       Dataland
                     </Button>
               </Link>
+              <Link href={'/district'}>
+                <Button
+                      key={'Districts'}
+                      sx={{ my: 2, color: 'white', display: 'block' }}
+                    >
+                      Districts
+                    </Button>
+              </Link>
+              <Link href={'/neighborhood'}>
+                <Button
+                      key={'Neighborhoods'}
+                      sx={{ my: 2, color: 'white', display: 'block' }}
+                    >
+                      Neighborhoods
+                    </Button>
+              </Link>
+              
             </Box>
 
             <Box sx={{ flexGrow: 0 }}>
