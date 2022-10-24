@@ -14,3 +14,26 @@ a {
 * {
   box-sizing: border-box;
 }
+
+.city{
+  stroke-width:1;
+  cursor:pointer;
+  fill:#307ecc3c;
+  stroke: #256eb83c;
+}
+.city:hover{
+  fill:rgb(198, 206, 236);
+  stroke: rgb(172, 181, 214);
+
+}
+.tooltip{
+  background-color:white;
+  border:solid 1px rgb(172, 181, 214);
+  border-width:1px;
+  border-radius:5px;
+  padding:10px;
+  visibility: hidden;
+}
+.show{
+  visibility: visible!important;
+}
