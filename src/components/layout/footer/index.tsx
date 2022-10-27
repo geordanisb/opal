@@ -85,12 +85,12 @@ export default function BottomAppBar() {
       <AppBar position="fixed" color="primary" sx={{ top: 'auto', bottom: 0 }}>
         <Toolbar>
           <Box sx={{ flexGrow: 1 }} />
-          <IconButton color="inherit">
+          {/* <IconButton color="inherit">
             <SearchIcon />
           </IconButton>
           <IconButton color="inherit">
             <MoreIcon />
-          </IconButton>
+          </IconButton> */}
         </Toolbar>
       </AppBar>
     </React.Fragment>

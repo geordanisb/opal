@@ -12,8 +12,10 @@ import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
 import AdbIcon from '@mui/icons-material/Adb';
-import { FormControlLabel, FormGroup, Switch } from '@mui/material';
+import { Divider, FormControlLabel, FormGroup, Switch } from '@mui/material';
 import Link from 'next/link';
+import { AccountCircle, Home, MoreVert } from '@mui/icons-material';
+import { height } from '@mui/system';
 
 const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
 
@@ -106,12 +108,21 @@ const NavBar = () => {
                   display: { xs: 'block', md: 'none' },
                 }}
               >
-                <Link href="/dataland">
+                <Link href="/">
+                  <MenuItem key={'Dataland'}>
+                      {/* <Typography textAlign="center">{'Dataland'}</Typography> */}
+                      <Button endIcon={<Home/>}
+                      sx={{ my: 2, color: 'black' }}
+                >
+                </Button>
+                  </MenuItem>
+                </Link>
+                <Link href="/">
                   <MenuItem key={'Dataland'}>
                       <Typography textAlign="center">{'Dataland'}</Typography>
                   </MenuItem>
                 </Link>
-                <Link href="/district">
+                {/* <Link href="/district">
                   <MenuItem key={'Districts'}>
                       <Typography textAlign="center">{'Districts'}</Typography>
                   </MenuItem>
@@ -120,7 +131,7 @@ const NavBar = () => {
                   <MenuItem key={'Neighborhoods'}>
                       <Typography textAlign="center">{'Neighborhoods'}</Typography>
                   </MenuItem>
-                </Link>
+                </Link> */}
               </Menu>
             </Box>
             {/* <AdbIcon sx={{ display: { xs: 'flex', md: 'none' }, mr: 1 }} /> */}
@@ -142,16 +153,24 @@ const NavBar = () => {
             >
               OPAL
             </Typography>
-            <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-              <Link href={'/dataland'}>
+            <Box id="destock-menu" sx={{ flexGrow: 1,display: { xs: 'none', md: 'flex' },alignItems:'center',height:{md:'50px'} }}>
+              <Link href={'/'}>
+                <Button endIcon={<Home/>}
+                      sx={{ my: 2, color: 'white'}}
+                >
+                </Button>
+                
+              </Link>
+              <Divider orientation='vertical' variant='middle' sx={{border:'solid .5px white',opacity:'.5',height:'25px'}}/>
+              <Link href={'/'}>
                 <Button
                       key={'Dataland'}
-                      sx={{ my: 2, color: 'white', display: 'block' }}
+                      sx={{ my: 2, color: 'white' }}
                     >
                       Dataland
                     </Button>
               </Link>
-              <Link href={'/district'}>
+              {/* <Link href={'/district'}>
                 <Button
                       key={'Districts'}
                       sx={{ my: 2, color: 'white', display: 'block' }}
@@ -166,14 +185,18 @@ const NavBar = () => {
                     >
                       Neighborhoods
                     </Button>
-              </Link>
+              </Link> */}
               
             </Box>
 
             <Box sx={{ flexGrow: 0 }}>
               <Tooltip title="Open settings">
                 <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                  <Avatar alt="Remy Sharp" src="/static/images/avatar/2.jpg" />
+                  <>
+                  <MoreVert sx={{color:'white'}}/>
+                  <AccountCircle sx={{color:'white'}}/>
+                  </>
+                  {/* <Avatar alt="Remy Sharp" src="/static/images/avatar/2.jpg" /> */}
                 </IconButton>
               </Tooltip>
               <Menu

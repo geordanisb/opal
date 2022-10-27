@@ -16,8 +16,8 @@ const DatalandPage: FunctionComponent = ()=>{
         3:'Island',
         4:'National',
     }
-    const [algorithm,setAlgoritm] = useState<number|string>(1)
     const [location,setLocation] = useState<number|string>(1)
+    const [algorithm,setAlgoritm] = useState<number|string>(1)
     const [from,setFrom] = useState<Date>()
     const [to,setTo] = useState<Date>()
     const [spec,setSpec] = useState<Record<string,any>>()
