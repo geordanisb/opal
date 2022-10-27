@@ -16,6 +16,7 @@ import { Divider, FormControlLabel, FormGroup, Switch } from '@mui/material';
 import Link from 'next/link';
 import { AccountCircle, Home, MoreVert } from '@mui/icons-material';
 import { height } from '@mui/system';
+import Image from 'next/image';
 
 const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
 
@@ -60,24 +61,17 @@ const NavBar = () => {
       <AppBar position="static" >
         <Container maxWidth="xl">
           <Toolbar disableGutters>
-            {/* <AdbIcon sx={{ display: { xs: 'none', md: 'flex' }, mr: 1 }} /> */}
-            <Typography
-              variant="h6"
-              noWrap
-              component="a"
-              href="/"
-              sx={{
-                mr: 2,
-                display: { xs: 'none', md: 'flex' },
-                fontFamily: 'monospace',
-                fontWeight: 700,
-                letterSpacing: '.3rem',
-                color: 'inherit',
-                textDecoration: 'none',
-              }}
-            >
-              OPAL
-            </Typography>
+            <Box sx={{marginRight:{xs:'0px',md:'50px',lg:'125px'},marginLeft:{xs:'0px',md:'50px',lg:'125px'}}}>
+              
+              <Link href={'/'}>
+                <Image src={'/OPAL_White Transparent.png'} 
+                  alt='OPAL'  
+                  height={63}
+                  width={166}
+                />
+              </Link>
+
+            </Box>
 
             <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
               <IconButton
@@ -122,37 +116,10 @@ const NavBar = () => {
                       <Typography textAlign="center">{'Dataland'}</Typography>
                   </MenuItem>
                 </Link>
-                {/* <Link href="/district">
-                  <MenuItem key={'Districts'}>
-                      <Typography textAlign="center">{'Districts'}</Typography>
-                  </MenuItem>
-                </Link>
-                <Link href="/neighborhood">
-                  <MenuItem key={'Neighborhoods'}>
-                      <Typography textAlign="center">{'Neighborhoods'}</Typography>
-                  </MenuItem>
-                </Link> */}
+                
               </Menu>
             </Box>
-            {/* <AdbIcon sx={{ display: { xs: 'flex', md: 'none' }, mr: 1 }} /> */}
-            <Typography
-              variant="h5"
-              noWrap
-              component="a"
-              href=""
-              sx={{
-                mr: 2,
-                display: { xs: 'flex', md: 'none' },
-                flexGrow: 1,
-                fontFamily: 'monospace',
-                fontWeight: 700,
-                letterSpacing: '.3rem',
-                color: 'inherit',
-                textDecoration: 'none',
-              }}
-            >
-              OPAL
-            </Typography>
+            
             <Box id="destock-menu" sx={{ flexGrow: 1,display: { xs: 'none', md: 'flex' },alignItems:'center',height:{md:'50px'} }}>
               <Link href={'/'}>
                 <Button endIcon={<Home/>}
@@ -196,7 +163,6 @@ const NavBar = () => {
                   <MoreVert sx={{color:'white'}}/>
                   <AccountCircle sx={{color:'white'}}/>
                   </>
-                  {/* <Avatar alt="Remy Sharp" src="/static/images/avatar/2.jpg" /> */}
                 </IconButton>
               </Tooltip>
               <Menu

@@ -3,7 +3,7 @@ import { Dimension } from '../types/dimension'
 import * as d3 from 'd3'
 import { Box } from '@mui/system'
 
-const useDrawDistrict = (district:string)=>{
+const useDrawDistrict = (district:string,geojson:any)=>{
     const [dimensions,setDimensions] = useState<Dimension>()
 
     useEffect(()=>{
@@ -20,7 +20,7 @@ const useDrawDistrict = (district:string)=>{
 
       useEffect(()=>{
         const fn = async ()=>{
-            if(dimensions && district){
+            if(dimensions && district && geojson){
                 const {margin,width,height,ctrWidth,ctrHeight} = dimensions
                 let svg = d3.select(`#map-${district}`).html('<svg></svg>').select('svg')
                 .attr('width',width)
@@ -34,7 +34,6 @@ const useDrawDistrict = (district:string)=>{
                 });
                 svg.call(zoom);
                 
-                let geojson = await d3.json(`/data/maldiva.${district}.json`);
                 // if(district){
                 //   const city = geojson.features.filter(i=>i.properties.name==district)
                 //   geojson = {type:'FeatureCollection',features:city}
@@ -71,10 +70,9 @@ const useDrawDistrict = (district:string)=>{
                 })
           
             }
-
         }
         fn()
-      },[dimensions,district])
+      },[dimensions,district,geojson])
     
       
     const Map:React.FC = ()=>{
