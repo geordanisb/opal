@@ -47,6 +47,7 @@ const useDrawDistrict = (district:string,geojson:any)=>{
                 .data(geojson.features)
                 .join('path')
                 .attr('d',pathGenerator)
+                .attr('stroke-dasharray','2,2')
                 .classed('city',true)
           
                 const tooltip = d3.select("#tooltip")

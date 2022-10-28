@@ -20,6 +20,9 @@ a {
   cursor:pointer;
   fill:#307ecc3c;
   stroke: #256eb83c;
+  stroke-linejoin:round;
+  stroke-linecap:round;
+  
 }
 .city:hover{
   fill:rgb(198, 206, 236);
