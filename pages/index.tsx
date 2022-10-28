@@ -95,9 +95,9 @@ export default function Home() {
                                   label="Select the algorithm you want to explore."
                                   onChange={onChangeLocation}
                                   >
-                                      <MenuItem value={1}>Neighborhood</MenuItem>
+                                      {/* <MenuItem value={1}>Neighborhood</MenuItem> */}
                                       <MenuItem value={2}>District</MenuItem>
-                                      <MenuItem value={3}>Island</MenuItem>
+                                      {/* <MenuItem value={3}>Island</MenuItem> */}
                                       <MenuItem value={4}>National</MenuItem>
                                   </Select>
                               </FormControl>
@@ -114,6 +114,9 @@ export default function Home() {
                                 onChange={(e)=>setDistrict(e.target.value)}
                               >
                                 <MenuItem value='male'>Malé</MenuItem>
+                                <MenuItem value='mafushi'>Mafushi</MenuItem>
+                                <MenuItem value='naifaru'>Naifaru</MenuItem>
+                                <MenuItem value='baros'>Baros</MenuItem>
                                 <MenuItem value='fuvahmulah'>Fuvahmulah</MenuItem>
                               </Select>
                             </FormControl>
