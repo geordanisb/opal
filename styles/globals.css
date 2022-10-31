@@ -15,7 +15,7 @@ a {
   box-sizing: border-box;
 }
 
-.city{
+.city,#map path1{
   stroke-width:1;
   cursor:pointer;
   fill:#307ecc3c;
@@ -24,9 +24,10 @@ a {
   stroke-linecap:round;
   
 }
-.city:hover{
+.city:hover,#map path:hover{
   fill:rgb(198, 206, 236);
   stroke: rgb(172, 181, 214);
+  cursor:pointer;
 
 }
 .tooltip{

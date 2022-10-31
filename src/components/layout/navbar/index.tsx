@@ -64,7 +64,7 @@ const NavBar = () => {
             <Box sx={{marginRight:{xs:'0px',md:'50px',lg:'125px'},marginLeft:{xs:'0px',md:'50px',lg:'125px'}}}>
               
               <Link href={'/'}>
-                <Image src={'/OPAL_White Transparent.png'} 
+                <img src={'/OPAL_White Transparent.png'} 
                   alt='OPAL'  
                   height={63}
                   width={166}
