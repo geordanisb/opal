@@ -1,4 +1,4 @@
-import {  Alert, Breadcrumbs, Button, Container, Divider, FormControl, FormGroup, Grid, Input, InputLabel, MenuItem, Select, Snackbar, Table, TableBody, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
+import {  Alert, Breadcrumbs, Button, CircularProgress, Container, Divider, FormControl, Backdrop, Grid, Input, InputLabel, MenuItem, Select, Snackbar, Typography } from '@mui/material';
 import { Box } from '@mui/system';
 import { useEffect, useState } from 'react';
 import useDrawDistrictVegaLiteAPI from '@/src/hooks/useDrawDistrictVegaLiteAPI';
@@ -62,6 +62,7 @@ export default function Home() {
   const [from,setFrom] = useState('')
   const [to,setTo] = useState('')
   const [data,setData] = useState<Data[]>([])
+  const [loading,setLoading] = useState(false)
 
 //   const {Map} = useDrawDistrictVegaLiteAPI(district)
 
@@ -113,11 +114,13 @@ export default function Home() {
   }
 
   const submit =  async ()=>{
+    setLoading(true)
     const url = `/api/data?district=${district}&from=${from}&to=${to}`;
     const r  = await fetch(url)
     const {data:d} = await r.json()
     setData(()=>d)   
     console.log(district,d) 
+    setLoading(false)
   }
 
     return <Box>
@@ -214,7 +217,7 @@ export default function Home() {
                               </Grid>
                           </Box>
                           <Box justifyContent={'center'} display='flex' sx={{margin:'.5em 0'}}>
-                              <Button variant='contained' disabled={!isValidForm()} sx={{textTransform:'none',width:'126px',borderRadius:'2em'}} color='primary' endIcon={<ArrowForward/>} onClick={()=>submit()}>Submit</Button>
+                              <Button variant='contained' disabled={!isValidForm() || loading} sx={{textTransform:'none',width:'126px',borderRadius:'2em'}} color='primary' endIcon={<ArrowForward/>} onClick={()=>submit()}>Submit</Button>
                           </Box>
                           <Box justifyContent={'center'} display='flex' sx={{margin:'.5em 0'}}>
                               <Button variant='contained' sx={{textTransform:'none',width:'126px',borderRadius:'2em',backgroundColor:'gray'}} endIcon={<HighlightOff/>} onClick={()=>reset()}>Re-start</Button>
@@ -259,6 +262,7 @@ export default function Home() {
                                 </div>: <></> }
                             </Box>
                         </Box>
+                
                     </Grid>
                 </Grid>
 
@@ -270,6 +274,13 @@ export default function Home() {
                 >
                 <Alert severity="warning"><>{error}</></Alert>
                 </Snackbar>
+
+                <Backdrop
+                sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+                open={loading}
+                >
+                    <CircularProgress color="inherit" />
+                </Backdrop>
 
     </Box>
 
