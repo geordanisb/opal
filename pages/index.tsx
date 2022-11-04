@@ -1,4 +1,4 @@
-import {  Alert, Breadcrumbs, Button, CircularProgress, Container, Divider, FormControl, Backdrop, Grid, Input, InputLabel, MenuItem, Select, Snackbar, Typography } from '@mui/material';
+import {  Alert, Breadcrumbs, Button, CircularProgress, Container, Divider, FormControl, Backdrop, Grid, Input, InputLabel, MenuItem, Select, Snackbar, Typography, Chip } from '@mui/material';
 import { Box } from '@mui/system';
 import { useEffect, useState } from 'react';
 import useDrawDistrictVegaLiteAPI from '@/src/hooks/useDrawDistrictVegaLiteAPI';
@@ -23,10 +23,10 @@ export default function Home() {
     4:'National',
   }
   const columns = [
-    {field:'date_from',headerName:'date_from',width:100,
+    {field:'date_from',headerName:'date_from',width:110,
         valueGetter: (params: GridValueGetterParams) => `${moment(params.row.date_from).format('ll')}`
     },
-    {field:'date_to',headerName:'date_to',width:100,
+    {field:'date_to',headerName:'date_to',width:110,
         valueGetter: (params: GridValueGetterParams) => `${moment(params.row.date_to).format('ll')}`
     },
     {field:'district_out',headerName:'district_out',width:100},
@@ -57,7 +57,10 @@ export default function Home() {
 
   const [algorithm,setAlgoritm] = useState<number|string>(1)
 
-  const [district,setDistrict] = useState('')
+  const districts = [
+    'Male','Maafushi','Naifaru','Baros','Fuvahmulah'
+]
+  const [district,setDistrict] = useState<string[]>([])
   const [location,setLocation] = useState<number|string>(2)
   const [from,setFrom] = useState('')
   const [to,setTo] = useState('')
@@ -69,7 +72,11 @@ export default function Home() {
   const onChangeLocation = (e)=>{
     const val = e.target.value;
     setLocation(val)
-    setDistrict(()=>'')
+    if(val!=1)
+        setDistrict(()=>[])
+    else
+        setDistrict(()=>districts)
+
   }
 
   const validDates = (from,to)=>{
@@ -107,7 +114,7 @@ export default function Home() {
   const reset = ()=>{
     setAlgoritm(1)
     setLocation(2)
-    setDistrict('')
+    setDistrict([])
     setFrom('')
     setTo('')
     setData([])
@@ -115,12 +122,21 @@ export default function Home() {
 
   const submit =  async ()=>{
     setLoading(true)
-    const url = `/api/data?district=${district}&from=${from}&to=${to}`;
+    const dq = district.reduce((p,c)=>{
+        p = p ? p+=`&district=${c}` : `district=${c}`;
+        return p;
+    },'')
+    const url = `/api/data?${dq}&from=${from}&to=${to}`;
     const r  = await fetch(url)
     const {data:d} = await r.json()
     setData(()=>d)   
-    console.log(district,d) 
+    console.log(dq,d) 
     setLoading(false)
+  }
+
+  const onChangeDistrict = (e)=>{
+    setDistrict(e.target.value)
+    console.log(e)
   }
 
     return <Box>
@@ -185,13 +201,19 @@ export default function Home() {
                                 id="disctrict-select"
                                 value={district}
                                 label="District"
-                                onChange={(e)=>setDistrict(e.target.value)}
+                                multiple
+                                onChange={onChangeDistrict}
+                                renderValue={(selected) => (
+                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                      {selected.map((value) => (
+                                        <Chip key={value} label={value} />
+                                      ))}
+                                    </Box>
+                                  )}
                               >
-                                <MenuItem value='Male'>Malé</MenuItem>
-                                <MenuItem value='Maafushi'>Maafushi</MenuItem>
-                                <MenuItem value='Naifaru'>Naifaru</MenuItem>
-                                <MenuItem value='Baros'>Baros</MenuItem>
-                                <MenuItem value='Fuvahmulah'>Fuvahmulah</MenuItem>
+                                {districts.map(d=><MenuItem key={d} value={d}>
+                                    {d}
+                                </MenuItem>)}
                               </Select>
                             </FormControl>
                           </Box>:<></>}

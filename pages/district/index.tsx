@@ -88,7 +88,7 @@ const DatalandPage: FunctionComponent<Props> = ({districts})=>{
 
     </Container> 
 }
-export const getServerSideProps = async ()=>{debugger;
+export const getServerSideProps = async ()=>{
     const r = await fetch(`${process.env.SERVER_PATH}/api/fake/district`)
     const json =await  r.json()
     const {districts} = json

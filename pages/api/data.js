@@ -13,8 +13,17 @@ export default async function Index(req, res) {
     const t = d.date_to.split('/').reverse().join('-')
     d.date_to = t
   })
+  
   if(district){
-    data = data.filter(d=>d.district_out == district || d.district_in == district)
+    data = data.filter(d=>{
+      if(typeof district == "string"){
+        return d.district_in == district || d.district_out == district;
+      }
+      else if(district.length){
+        return district.includes(d.district_in) && district.includes(d.district_out)
+      }
+      cmpDistrict(d.district_out,district)  || cmpDistrict(d.district_in,district)
+    })
   }
   if(from && to){
     data = data.filter(d=>moment(from).isBetween(d.date_from,d.date_to,undefined,"[]") && moment(to).isBetween(d.date_from,d.date_to,undefined,"[]") )
