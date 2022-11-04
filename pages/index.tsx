@@ -1,10 +1,12 @@
-import {  Breadcrumbs, Button, Container, Divider, FormControl, FormGroup, Grid, Input, InputLabel, MenuItem, Select, Table, TableBody, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
+import {  Alert, Breadcrumbs, Button, Container, Divider, FormControl, FormGroup, Grid, Input, InputLabel, MenuItem, Select, Snackbar, Table, TableBody, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
 import { Box } from '@mui/system';
 import { useEffect, useState } from 'react';
-import useDrawDistrict from '@/src/hooks/useDrawDistrict';
+import useDrawDistrictVegaLiteAPI from '@/src/hooks/useDrawDistrictVegaLiteAPI';
 import { ArrowForward, HighlightOff, NavigateNext } from '@mui/icons-material';
-// import * as vegaEmbeded from 'vega-embed'
-import * as d3 from 'd3'
+import moment from 'moment'
+import { Data } from '@/src/types/Data';
+import { DataGrid, GridValueGetterParams } from '@mui/x-data-grid';
+
 
 export default function Home() {
   const algoritmMap = {
@@ -20,33 +22,102 @@ export default function Home() {
     3:'Island',
     4:'National',
   }
+  const columns = [
+    {field:'date_from',headerName:'date_from',width:100,
+        valueGetter: (params: GridValueGetterParams) => `${moment(params.row.date_from).format('ll')}`
+    },
+    {field:'date_to',headerName:'date_to',width:100,
+        valueGetter: (params: GridValueGetterParams) => `${moment(params.row.date_to).format('ll')}`
+    },
+    {field:'district_out',headerName:'district_out',width:100},
+    {field:'district_in',headerName:'district_in',width:100},
+    {field:'subscriber_in',headerName:'subscriber_in',width:100},
+    {field:'subscriber_out',headerName:'subscriber_out',width:110},
+    {field:'density_in',headerName:'density_in',width:100},
+    {field:'density_out',headerName:'density_out',width:100},
+    {field:'sms_in',headerName:'sms_in',width:100},
+    {field:'sms_out',headerName:'sms_out',width:100},
+    {field:'call_in',headerName:'call_in',width:100},
+    {field:'call_out',headerName:'call_out',width:100},
+    {field:'movement',headerName:'movement',width:100},
+]
+  const dateFormat = 'YYYY-MM-DD'
+  const [error,setError] = useState('')
+
+  const [dimensions,setDimensions] = useState<{width:number,height:number}>()
+
+  useEffect(()=>{
+    setDimensions({
+        width:window.innerWidth/2,
+        height:Math.ceil(window.innerHeight/(3/2))
+
+        // height:Math.ceil(window.innerHeight/(3/2))
+    })
+  },[])
+
   const [algorithm,setAlgoritm] = useState<number|string>(1)
 
   const [district,setDistrict] = useState('')
-  const [geojson,setGeojson] = useState()
-
   const [location,setLocation] = useState<number|string>(2)
-  const [from,setFrom] = useState<Date>()
-  const [to,setTo] = useState<Date>()
+  const [from,setFrom] = useState('')
+  const [to,setTo] = useState('')
+  const [data,setData] = useState<Data[]>([])
 
-  useEffect(()=>{
-    const fn = async ()=>{
-        if(district){
-            let gj = await d3.json(`/data/maldiva.${district}.json`);
-            if(gj)
-            setGeojson(()=>gj)
-        }
-    }  
-    fn()
-  },[location,district])
-
-  const {Map} = useDrawDistrict(district,geojson)
+//   const {Map} = useDrawDistrictVegaLiteAPI(district)
 
   const onChangeLocation = (e)=>{
     const val = e.target.value;
     setLocation(val)
     setDistrict(()=>'')
-    setGeojson(()=>null)
+  }
+
+  const validDates = (from,to)=>{
+    if(from && to)
+        return moment(from).isSameOrBefore(moment(to))
+    return true
+  }
+  const isValidForm = ()=>{
+    return algorithm && location && district && validDates(from,to)
+  }
+
+  const setDate = (name,e)=>{
+    const val = e.target.value
+
+    if(name=='from'){
+        if(!validDates(val,to)){
+            setError(`Invalid 'From' value: ${val}`)
+        }
+        else{
+            setFrom(()=>moment(val).format(dateFormat));
+        }
+    }
+    else if(name=='to'){
+        if(!validDates(from,val)){
+            setError(`Invalid 'To' value: ${val}`)
+        }
+        else{
+            setTo(()=>moment(val).format(dateFormat));
+        }
+    }
+    
+
+  }
+
+  const reset = ()=>{
+    setAlgoritm(1)
+    setLocation(2)
+    setDistrict('')
+    setFrom('')
+    setTo('')
+    setData([])
+  }
+
+  const submit =  async ()=>{
+    const url = `/api/data?district=${district}&from=${from}&to=${to}`;
+    const r  = await fetch(url)
+    const {data:d} = await r.json()
+    setData(()=>d)   
+    console.log(district,d) 
   }
 
     return <Box>
@@ -113,11 +184,11 @@ export default function Home() {
                                 label="District"
                                 onChange={(e)=>setDistrict(e.target.value)}
                               >
-                                <MenuItem value='male'>Malé</MenuItem>
-                                <MenuItem value='mafushi'>Mafushi</MenuItem>
-                                <MenuItem value='naifaru'>Naifaru</MenuItem>
-                                <MenuItem value='baros'>Baros</MenuItem>
-                                <MenuItem value='fuvahmulah'>Fuvahmulah</MenuItem>
+                                <MenuItem value='Male'>Malé</MenuItem>
+                                <MenuItem value='Maafushi'>Maafushi</MenuItem>
+                                <MenuItem value='Naifaru'>Naifaru</MenuItem>
+                                <MenuItem value='Baros'>Baros</MenuItem>
+                                <MenuItem value='Fuvahmulah'>Fuvahmulah</MenuItem>
                               </Select>
                             </FormControl>
                           </Box>:<></>}
@@ -128,7 +199,7 @@ export default function Home() {
                                       <Typography variant='caption' color='default' margin={'0'}>Select the start date</Typography>
 
                                       <FormControl fullWidth>
-                                          <Input value={from} onChange={(e)=>setFrom(new Date(e.target.value))} type="date"/>
+                                          <Input value={from} onChange={(e)=>setDate('from',e)} type="date"/>
                                       </FormControl>
                                   </Grid>
                                   <Grid item xs={12} md={6}>
@@ -136,20 +207,20 @@ export default function Home() {
                                       <Typography variant='caption' color='default' margin={'0'}>Select the end date</Typography>
 
                                           <FormControl fullWidth>
-                                              <Input value={to} onChange={(e)=>setTo(new Date(e.target.value))} type="date"/>
+                                              <Input value={to} onChange={(e)=>setDate('to',e)} type="date"/>
                                           </FormControl>
                                   </Grid>
 
                               </Grid>
                           </Box>
                           <Box justifyContent={'center'} display='flex' sx={{margin:'.5em 0'}}>
-                              <Button variant='contained' sx={{textTransform:'none',width:'126px',borderRadius:'2em'}} color='primary' endIcon={<ArrowForward/>}>Submit</Button>
+                              <Button variant='contained' disabled={!isValidForm()} sx={{textTransform:'none',width:'126px',borderRadius:'2em'}} color='primary' endIcon={<ArrowForward/>} onClick={()=>submit()}>Submit</Button>
                           </Box>
                           <Box justifyContent={'center'} display='flex' sx={{margin:'.5em 0'}}>
-                              <Button variant='contained' sx={{textTransform:'none',width:'126px',borderRadius:'2em',backgroundColor:'gray'}} endIcon={<HighlightOff/>}>Re-start</Button>
+                              <Button variant='contained' sx={{textTransform:'none',width:'126px',borderRadius:'2em',backgroundColor:'gray'}} endIcon={<HighlightOff/>} onClick={()=>reset()}>Re-start</Button>
                           </Box>
                       </Box>
-                        
+
                     </Grid>
                     <Grid item xs={12} md={8} >
                         <Box >
@@ -161,31 +232,46 @@ export default function Home() {
                                 <Typography fontWeight={'bold'}>Dataland</Typography>
                                 <Typography fontWeight={'bold'}>{algoritmMap[algorithm].name}</Typography>
                                 <Typography fontWeight={'bold'}>{locationMap[location]}</Typography>
-                                {(from||to) 
+                                {
+                                    (from||to)
                                     ? <Typography fontWeight={'bold'}>
-                                        {from ? from.toLocaleString('en-en',{day:'numeric',month:'long',year:'numeric'}):''}
-                                        {to ? ' - '+to.toLocaleString('en-en',{day:'numeric',month:'long',year:'numeric'}):''}
+                                        {from ? moment(from).format('LL'):''}
+                                        {to ? ' - '+moment(to).format('LL'):''}
                                     </Typography>
-                                :''}
+                                    : ''
+                                }
                             </Breadcrumbs>
                             </Box>
                             <Typography fontStyle={'italic'}>{algoritmMap[algorithm].name}: {algoritmMap[algorithm].description}</Typography>
                             <Divider sx={{margin:'.5em 0'}} />
                             <Box>
-                                {/* <Typography fontWeight={'bold'}>
-                                USA Seatle's airport flys to other airports
-                                </Typography>
-                                <Typography fontStyle={'italic'} color='primary' className='info-panel'>
-
-                                </Typography>
-                                <div id="vis"></div> */}
-                                <Map></Map>
+                                {/* <Map></Map> */}
+                        
+                                {dimensions && data && data.length ?<div style={{ height: dimensions.height, width: '100%' }}>
+                                    <DataGrid
+                                        getRowId={(r)=>`${r.date_from}-${r.date_to}-${r.district_in}-${r.district_out}`}
+                                        autoPageSize 
+                                        pagination 
+                                        rows={data}
+                                        columns={columns}
+                                        checkboxSelection
+                                    />
+                                </div>: <></> }
                             </Box>
                         </Box>
                     </Grid>
                 </Grid>
 
-    </Box> 
-  
+                <Snackbar 
+                    open={!!error} 
+                    autoHideDuration={6000} 
+                    anchorOrigin={{ vertical:'top', horizontal:'center' }} 
+                    onClose={()=>setError('')}
+                >
+                <Alert severity="warning"><>{error}</></Alert>
+                </Snackbar>
+
+    </Box>
+
 }
 

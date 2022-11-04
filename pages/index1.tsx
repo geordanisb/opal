@@ -1,9 +1,10 @@
 import {  Breadcrumbs, Button, Container, Divider, FormControl, FormGroup, Grid, Input, InputLabel, MenuItem, Select, Table, TableBody, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
 import { Box } from '@mui/system';
 import { useEffect, useState } from 'react';
-import useDrawDistrictVegaLiteAPI from '@/src/hooks/useDrawDistrictVegaLiteAPI';
+import useDrawDistrict from '@/src/hooks/useDrawDistrict';
 import { ArrowForward, HighlightOff, NavigateNext } from '@mui/icons-material';
-
+// import * as vegaEmbeded from 'vega-embed'
+import * as d3 from 'd3'
 
 export default function Home() {
   const algoritmMap = {
@@ -22,17 +23,30 @@ export default function Home() {
   const [algorithm,setAlgoritm] = useState<number|string>(1)
 
   const [district,setDistrict] = useState('')
+  const [geojson,setGeojson] = useState()
 
   const [location,setLocation] = useState<number|string>(2)
   const [from,setFrom] = useState<Date>()
   const [to,setTo] = useState<Date>()
 
-  const {Map} = useDrawDistrictVegaLiteAPI(district)
+  useEffect(()=>{
+    const fn = async ()=>{
+        if(district){
+            let gj = await d3.json(`/data/maldiva.${district}.json`);
+            if(gj)
+            setGeojson(()=>gj)
+        }
+    }  
+    fn()
+  },[location,district])
+
+  const {Map} = useDrawDistrict(district,geojson)
 
   const onChangeLocation = (e)=>{
     const val = e.target.value;
     setLocation(val)
     setDistrict(()=>'')
+    setGeojson(()=>null)
   }
 
     return <Box>
