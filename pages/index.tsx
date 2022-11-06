@@ -1,7 +1,7 @@
 import {  Alert, Breadcrumbs, Button, CircularProgress, Container, Divider, FormControl, Backdrop, Grid, Input, InputLabel, MenuItem, Select, Snackbar, Typography, Chip } from '@mui/material';
 import { Box } from '@mui/system';
 import { useEffect, useState } from 'react';
-import useDrawDistrictVegaLiteAPI from '@/src/hooks/useDrawDistrictVegaLiteAPI';
+import useDrawDistrictVegaLite from '@/src/hooks/useDrawDistrictVegaLite';
 import { ArrowForward, HighlightOff, NavigateNext } from '@mui/icons-material';
 import moment from 'moment'
 import { Data } from '@/src/types/Data';
@@ -66,8 +66,7 @@ export default function Home() {
   const [to,setTo] = useState('')
   const [data,setData] = useState<Data[]>([])
   const [loading,setLoading] = useState(false)
-
-//   const {Map} = useDrawDistrictVegaLiteAPI(district)
+  const {Map} = useDrawDistrictVegaLite(district,data)
 
   const onChangeLocation = (e)=>{
     const val = e.target.value;
@@ -120,18 +119,21 @@ export default function Home() {
     setData([])
   }
 
-  const submit =  async ()=>{
+  const submit =  (e)=>{
+    e.preventDefault()
     setLoading(true)
     const dq = district.reduce((p,c)=>{
         p = p ? p+=`&district=${c}` : `district=${c}`;
         return p;
     },'')
     const url = `/api/data?${dq}&from=${from}&to=${to}`;
-    const r  = await fetch(url)
-    const {data:d} = await r.json()
-    setData(()=>d)   
-    console.log(dq,d) 
-    setLoading(false)
+    fetch(url).then(r=>r.json())
+    .then(({data:d})=>{
+        setData(d)   
+        console.log(dq,d) 
+        setLoading(false)
+    })
+    // const {data:d} = await r.json()
   }
 
   const onChangeDistrict = (e)=>{
@@ -239,7 +241,7 @@ export default function Home() {
                               </Grid>
                           </Box>
                           <Box justifyContent={'center'} display='flex' sx={{margin:'.5em 0'}}>
-                              <Button variant='contained' disabled={!isValidForm() || loading} sx={{textTransform:'none',width:'126px',borderRadius:'2em'}} color='primary' endIcon={<ArrowForward/>} onClick={()=>submit()}>Submit</Button>
+                              <Button variant='contained' disabled={!isValidForm() || loading} sx={{textTransform:'none',width:'126px',borderRadius:'2em'}} color='primary' endIcon={<ArrowForward/>} onClick={submit}>Submit</Button>
                           </Box>
                           <Box justifyContent={'center'} display='flex' sx={{margin:'.5em 0'}}>
                               <Button variant='contained' sx={{textTransform:'none',width:'126px',borderRadius:'2em',backgroundColor:'gray'}} endIcon={<HighlightOff/>} onClick={()=>reset()}>Re-start</Button>
@@ -270,7 +272,9 @@ export default function Home() {
                             <Typography fontStyle={'italic'}>{algoritmMap[algorithm].name}: {algoritmMap[algorithm].description}</Typography>
                             <Divider sx={{margin:'.5em 0'}} />
                             <Box>
-                                {/* <Map></Map> */}
+                                <Map></Map>
+                            </Box>
+                            <Box>
                         
                                 {dimensions && data && data.length ?<div style={{ height: dimensions.height, width: '100%' }}>
                                     <DataGrid

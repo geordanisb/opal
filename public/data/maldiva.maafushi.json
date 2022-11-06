@@ -4,8 +4,8 @@
     {
       "type": "Feature",
       "properties": {
-        "name": "mafushi",
-        "label": "Mafushi"
+        "name": "maafushi",
+        "label": "Maafushi"
       },
       "geometry": {
         "coordinates": [

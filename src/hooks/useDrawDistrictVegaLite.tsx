@@ -3,8 +3,9 @@ import { Dimension } from '../types/dimension'
 import embed from 'vega-embed'
 
 import { Box } from '@mui/system'
+import { Data } from '../types/Data'
 
-const useDrawDistrictVegaLite = (district:string)=>{
+const useDrawDistrictVegaLite = (district:string[],data:Data[])=>{
   const [dimension,setDimensions] = useState<Dimension>()
   const [spec,setSpec] = useState<Record<string,any>>()
 
@@ -20,20 +21,47 @@ const useDrawDistrictVegaLite = (district:string)=>{
   },[])
 
   useEffect(()=>{
-    if(dimension && district){
+    if(dimension && district && district.length && data && data.length){
       const {width,height} = dimension
       setSpec({
         width,
         height,
         $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
-        layer:[
-          {
+        columns:3,
+        // layer:[
+        //   {
+        //     width,
+        //     height,
+        //     "data": {
+        //       "url": `/data/maldiva.topojson.json`,
+        //       "format": {
+        //         "type": "topojson",
+        //         "feature": "collection"
+        //       }
+        //     },
+        //     "projection": {
+        //       "type": "mercator",
+        //     },
+        //     "mark": {
+        //       "type": "geoshape",
+        //       "fill": "lightgray",
+        //       "stroke": "white"
+        //     }
+        //   }
+        // ]
+        concat:district.map(d=>{
+          return {
+            width:300,
+            height:300,
             "data": {
-              "url": `/data/maldiva.${district}.topojson.json`,
+              "url": `/data/maldiva.${d}.topojson.json`,
               "format": {
                 "type": "topojson",
                 "feature": "collection"
               }
+            },
+            "projection": {
+              "type": "mercator",
             },
             "mark": {
               "type": "geoshape",
@@ -41,11 +69,12 @@ const useDrawDistrictVegaLite = (district:string)=>{
               "stroke": "white"
             }
           }
-        ]
+        }),
+        
           
     })
     }
-  },[dimension,district])
+  },[dimension,district,data])
   
   if(spec)
     embed('#map',spec,{renderer:'svg'})
