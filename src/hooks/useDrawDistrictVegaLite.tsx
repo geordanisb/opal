@@ -55,7 +55,7 @@ const useDrawDistrictVegaLite = (district:string[],data:Data[])=>{
             width:300,
             height:300,
             "data": {
-              "url": `/api/topojson?district=${d}`,
+              "url": `/static/data/maldiva.${d}.topojson.json`,
               "format": {
                 "type": "topojson",
                 "feature": "collection"
