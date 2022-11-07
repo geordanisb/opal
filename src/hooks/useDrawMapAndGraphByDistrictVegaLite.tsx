@@ -96,10 +96,18 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],data:Data[])=>{
               {
                 filter:`datum.district_in != '${d}' `
               },
+              {
+                aggregate:[{
+                  op:'sum',
+                  field:'movement',
+                  as:'movement_sum'
+                }],
+                groupby:['district_out','district_in']
+              }
             ],
             "encoding": {
               "x": {"field": "district_in", "type": "nominal",title:'District In',axis:{labelAngle:0}},
-              "y": {"field": "movement", "type": "quantitative",title:'Movement'},
+              "y": {"field": "movement_sum", type:'quantitative',title:'Movement'},
               "color": {"field": "district_in", "type": "nominal",title:'District In'}
             }
           }
