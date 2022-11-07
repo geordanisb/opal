@@ -123,7 +123,7 @@ export default function Home() {
     setData([])
   }
 
-  const submit =  (e)=>{debugger;
+  const submit =  (e)=>{
     e.preventDefault()
     setLoading(true)
     const dq = district.reduce((p,c)=>{
