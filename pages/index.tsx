@@ -16,11 +16,9 @@ export default function Home() {
     4:{name:'Residents',description:"Density: Number of users who spent most of their time in a certain area in a given time interval. "},
     5:{name:'Events',description:"Density: Number of users who spent most of their time in a certain area in a given time interval. "},
   }
-  const locationMap = {
-    1:'Neighborhood',
-    2:'District',
-    3:'Island',
-    4:'National',
+  const locations = {
+    1:'District',
+    2:'National',
   }
   const columns = [
     {field:'date_from',headerName:'date_from',width:110,
@@ -61,7 +59,7 @@ export default function Home() {
     'Male','Maafushi','Naifaru','Baros','Fuvahmulah'
 ]
   const [district,setDistrict] = useState<string[]>([])
-  const [location,setLocation] = useState<number|string>(2)
+  const [location,setLocation] = useState<number|string>(1)
   const [from,setFrom] = useState('')
   const [to,setTo] = useState('')
   const [data,setData] = useState<Data[]>([])
@@ -71,11 +69,17 @@ export default function Home() {
   const onChangeLocation = (e)=>{
     const val = e.target.value;
     setLocation(val)
-    if(val!=1)
+    if(val==1)
         setDistrict(()=>[])
-    else
-        setDistrict(()=>districts)
+    else if(val==2)
+        setDistrict(()=>[...districts])
+    setData(()=>[])    
 
+  }
+
+  const onChangeDistrict = (e)=>{
+    setDistrict(e.target.value)
+    setData(()=>[])    
   }
 
   const validDates = (from,to)=>{
@@ -84,7 +88,7 @@ export default function Home() {
     return true
   }
   const isValidForm = ()=>{
-    return algorithm && location && district && validDates(from,to)
+    return algorithm && location && district && district.length && validDates(from,to)
   }
 
   const setDate = (name,e)=>{
@@ -112,14 +116,14 @@ export default function Home() {
 
   const reset = ()=>{
     setAlgoritm(1)
-    setLocation(2)
+    setLocation(1)
     setDistrict([])
     setFrom('')
     setTo('')
     setData([])
   }
 
-  const submit =  (e)=>{
+  const submit =  (e)=>{debugger;
     e.preventDefault()
     setLoading(true)
     const dq = district.reduce((p,c)=>{
@@ -136,10 +140,7 @@ export default function Home() {
     // const {data:d} = await r.json()
   }
 
-  const onChangeDistrict = (e)=>{
-    setDistrict(e.target.value)
-    console.log(e)
-  }
+  
 
     return <Box>
         <style jsx global>
@@ -187,14 +188,15 @@ export default function Home() {
                                   label="Select the algorithm you want to explore."
                                   onChange={onChangeLocation}
                                   >
+                                    {Object.entries(locations).map(([k,v,])=><MenuItem value={k} key={k}>{v}</MenuItem>)}
                                       {/* <MenuItem value={1}>Neighborhood</MenuItem> */}
-                                      <MenuItem value={2}>District</MenuItem>
+                                      {/* <MenuItem value={1}>District</MenuItem> */}
                                       {/* <MenuItem value={3}>Island</MenuItem> */}
-                                      <MenuItem value={4}>National</MenuItem>
+                                      {/* <MenuItem value={2}>National</MenuItem> */}
                                   </Select>
                               </FormControl>
                           </Box>
-                          {location==2 ?<Box marginTop={'.5em'}>
+                          {location==1 ?<Box marginTop={'.5em'}>
                               <Typography variant='body2' fontWeight={'bold'} marginBottom='1em'>District*</Typography>
                               <FormControl fullWidth>
                               <InputLabel id="disctrict-lbl">District</InputLabel>
@@ -258,7 +260,7 @@ export default function Home() {
                             <Breadcrumbs aria-label="breadcrumb" separator={<NavigateNext/>}>
                                 <Typography fontWeight={'bold'}>Dataland</Typography>
                                 <Typography fontWeight={'bold'}>{algoritmMap[algorithm].name}</Typography>
-                                <Typography fontWeight={'bold'}>{locationMap[location]}</Typography>
+                                <Typography fontWeight={'bold'}>{locations[location]}</Typography>
                                 {
                                     (from||to)
                                     ? <Typography fontWeight={'bold'}>

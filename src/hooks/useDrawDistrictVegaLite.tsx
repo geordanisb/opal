@@ -20,8 +20,9 @@ const useDrawDistrictVegaLite = (district:string[],data:Data[])=>{
   setDimensions(d)
   },[])
 
+  const canDraw = ()=>dimension && district && district.length && data && data.length
   useEffect(()=>{
-    if(dimension && district && district.length && data && data.length){
+    if(canDraw()){
       const {width,height} = dimension
       setSpec({
         width,
@@ -76,7 +77,7 @@ const useDrawDistrictVegaLite = (district:string[],data:Data[])=>{
     }
   },[dimension,district,data])
   
-  if(spec)
+  if(canDraw() && spec)
     embed('#map',spec,{renderer:'svg'})
   
   const Map:React.FC = ()=>{
@@ -84,7 +85,7 @@ const useDrawDistrictVegaLite = (district:string[],data:Data[])=>{
           <Box id='panel-info'>
 
           </Box>
-          <Box id={`map`}/>
+          {canDraw() ? <Box id={`map`}/> : <></>}
           <Box id="tooltip" className="tooltip" style={{position:'absolute'}}/>
       </Box>
   }  
