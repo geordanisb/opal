@@ -106,7 +106,7 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],data:Data[])=>{
     embed('#map',spec,{renderer:'svg'})
   
   const Map:React.FC = ()=>{
-      return <Box>
+      return <Box sx={{marginBottom:'4em'}}>
           <Box id='panel-info'/>
           {canDraw() ? <Box id={`map`}/> : <></>}
           <Box id="tooltip" className="tooltip" style={{position:'absolute'}}/>
