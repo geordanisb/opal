@@ -30,108 +30,85 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],data:Data[])=>{
         width,
         height,
         $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
-        columns:3,
-        // layer:[
-        //   {
-        //     width,
-        //     height,
-        //     "data": {
-        //       "url": `/data/maldiva.topojson.json`,
-        //       "format": {
-        //         "type": "topojson",
-        //         "feature": "collection"
-        //       }
-        //     },
-        //     "projection": {
-        //       "type": "mercator",
-        //     },
-        //     "mark": {
-        //       "type": "geoshape",
-        //       "fill": "lightgray",
-        //       "stroke": "white"
-        //     }
-        //   }
-        // ]
-        concat:district.map(d=>{
-          return {
-            width:300,
-            height:300,
-            "data": {
-              "url": `/static/data/maldiva.${d}.topojson.json`,
-              "format": {
-                "type": "topojson",
-                "feature": "collection"
+        rows:district.length,
+        vconcat:district.map(d=>({
+            width,
+            height,
+            hconcat:[
+              {
+                "data": {
+                "url": `/static/data/maldiva.${d}.topojson.json`,
+                "format": {
+                  "type": "topojson",
+                  "feature": "collection"
+                }
+                },
+                "projection": {
+                  "type": "mercator",
+                },
+                "mark": {
+                  "type": "geoshape",
+                  "fill": "lightgray",
+                  "stroke": "white"
+                }
+              },
+              {
+                width:300,
+                height:300,
+                data:{
+                  values:data
+                },
+                layer:[
+                  {
+                    "mark": "bar",
+                    "transform": [
+                      {
+                        filter:`datum.district_out == '${d}' `
+                      },
+                      {
+                        filter:`datum.district_in != '${d}' `
+                      },
+                      {
+                        aggregate:[{
+                          op:'sum',
+                          field:'movement',
+                          as:'movement_sum'
+                        }],
+                        groupby:['district_out','district_in']
+                      }
+                    ],
+                    "encoding": {
+                      "x": {"field": "district_in", "type": "nominal",title:'District In',axis:{labelAngle:0}},
+                      "y": {"field": "movement_sum", type:'quantitative',title:'Movement'},
+                      "color": {"field": "district_in", "type": "nominal",title:'District In'},
+                    }
+                  },
+                  // {
+                  //   mark:'text',
+                  //   encoding:{
+                  //     text:{field:'movement', type:'quantitative'}
+                  //   }
+                  // }
+                ]
               }
-            },
-            "projection": {
-              "type": "mercator",
-            },
-            "mark": {
-              "type": "geoshape",
-              "fill": "lightgray",
-              "stroke": "white"
-            }
-            
-          }
-        }),
+            ]
+          
+        }))
+        
         
           
       });
-      setSpecGraph({
-        width,
-        height,
-        $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
-        concat:district.map(d=>{
-          return {
-            width:300,
-            height:300,
-            data:{
-              values:data
-            },
-            "mark": "bar",
-            "transform": [
-              {
-                filter:`datum.district_out == '${d}' `
-              },
-              {
-                filter:`datum.district_in != '${d}' `
-              },
-              {
-                aggregate:[{
-                  op:'sum',
-                  field:'movement',
-                  as:'movement_sum'
-                }],
-                groupby:['district_out','district_in']
-              }
-            ],
-            "encoding": {
-              "x": {"field": "district_in", "type": "nominal",title:'District In',axis:{labelAngle:0}},
-              "y": {"field": "movement_sum", type:'quantitative',title:'Movement'},
-              "color": {"field": "district_in", "type": "nominal",title:'District In'}
-            }
-          }
-        }),
-        
-          
-      })
+      
     }
   },[dimension,district,data])
   
   if(canDraw() && spec)
     embed('#map',spec,{renderer:'svg'})
-
-  if(canDraw() && specGraph)
-    embed('#graph',specGraph,{renderer:'svg'}) 
   
   const Map:React.FC = ()=>{
       return <Box>
-          <Box id='panel-info'>
-
-          </Box>
+          <Box id='panel-info'/>
           {canDraw() ? <Box id={`map`}/> : <></>}
-          {canDraw() ? <Box id={`graph`}/> : <></>}
-
           <Box id="tooltip" className="tooltip" style={{position:'absolute'}}/>
       </Box>
   }  
