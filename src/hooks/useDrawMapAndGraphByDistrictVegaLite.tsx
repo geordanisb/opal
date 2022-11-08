@@ -29,7 +29,7 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],data:Data[])=>{
       setSpec({
         width,
         height,
-        $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+        $schema:'https://vega.github.io/schema/vega-lite/v5.json',
         rows:district.length,
         vconcat:district.map(d=>({
             width,
@@ -46,11 +46,23 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],data:Data[])=>{
                 "projection": {
                   "type": "mercator",
                 },
-                "mark": {
-                  "type": "geoshape",
-                  "fill": "lightgray",
-                  "stroke": "white"
-                }
+                layer:[
+                  {
+                    "mark": {
+                      "type": "geoshape",
+                      "fill": "lightgray",
+                      "stroke": "white"
+                    }
+                  },
+                  {
+                    mark:{
+                      type:'text',
+                      text:d,
+                      fontWeight:'bold',
+                      color:'black'
+                    }
+                  }
+                ]
               },
               {
                 width:300,
@@ -58,47 +70,49 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],data:Data[])=>{
                 data:{
                   values:data
                 },
+                transform: [
+                  {
+                    filter:`datum.district_out == '${d}' `
+                  },
+                  {
+                    filter:`datum.district_in != '${d}' `
+                  },
+                  {
+                    aggregate:[{
+                      op:'sum',
+                      field:'movement',
+                      as:'movement_sum'
+                    }],
+                    groupby:['district_out','district_in']
+                  }
+                ],
+                encoding: {
+                  "x": {"field": "district_in", "type": "nominal",title:'District In',axis:{labelAngle:0}},
+                  "y": {"field": "movement_sum", type:'quantitative',title:'Movement'},
+                },
                 layer:[
                   {
-                    "mark": "bar",
-                    "transform": [
-                      {
-                        filter:`datum.district_out == '${d}' `
-                      },
-                      {
-                        filter:`datum.district_in != '${d}' `
-                      },
-                      {
-                        aggregate:[{
-                          op:'sum',
-                          field:'movement',
-                          as:'movement_sum'
-                        }],
-                        groupby:['district_out','district_in']
-                      }
-                    ],
-                    "encoding": {
-                      "x": {"field": "district_in", "type": "nominal",title:'District In',axis:{labelAngle:0}},
-                      "y": {"field": "movement_sum", type:'quantitative',title:'Movement'},
-                      "color": {"field": "district_in", "type": "nominal",title:'District In'},
+                    mark: {type:"bar",cornerRadiusEnd:4},
+                    encoding:{
+                      color: {"field": "district_in", "type": "nominal",title:'District In'}
                     }
                   },
-                  // {
-                  //   mark:'text',
-                  //   encoding:{
-                  //     text:{field:'movement', type:'quantitative'}
-                  //   }
-                  // }
+                  {
+                    mark:{
+                      type:'text',
+                      dy:10,
+                      shape:'square',
+                      color:'white',
+                      fontWeight:'bold',
+                    },
+                    encoding:{text:{field:'movement_sum',format:'s'}}
+                  }
+                
                 ]
               }
             ]
-          
         }))
-        
-        
-          
       });
-      
     }
   },[dimension,district,data])
   
