@@ -3,8 +3,9 @@ import { Dimension } from '../types/dimension'
 import embed from 'vega-embed'
 
 import { Box } from '@mui/system'
-import { Data } from '../types/Data'
+import { DataMonthly, DataWeekly, DataYearly } from '../types/Data'
 
+type Data = DataMonthly|DataWeekly|DataYearly
 const useDrawMapAndGraphByDistrictVegaLite = (district:string[],data:Data[])=>{
   const [dimension,setDimensions] = useState<Dimension>()
   const [spec,setSpec] = useState<Record<string,any>>()
@@ -51,7 +52,8 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],data:Data[])=>{
                     "mark": {
                       "type": "geoshape",
                       "fill": "lightgray",
-                      "stroke": "white"
+                      "stroke": "white",
+                      tooltip:d
                     }
                   },
                   {
@@ -92,10 +94,14 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],data:Data[])=>{
                 },
                 layer:[
                   {
-                    mark: {type:"bar",cornerRadiusEnd:4},
+                    mark: {
+                      type:"bar",
+                      cornerRadiusEnd:4,
+                      tooltip:true
+                    },
                     encoding:{
                       color: {"field": "district_in", "type": "nominal",title:'District In'}
-                    }
+                    },
                   },
                   {
                     mark:{
