@@ -210,7 +210,7 @@ const Home:NextPage<Props> = (props) => {
   const submit =  (e)=>{
     e.preventDefault()
     setLoading(true)
-    let d=[];debugger;
+    let d=[];
     if(periodType == 'weekly' && weeks?.length){
         const wq = weeks.map(w=>{
             return w.split('-')

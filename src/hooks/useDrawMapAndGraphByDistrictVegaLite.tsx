@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from 'react'
 import { Dimension } from '../types/dimension'
 import embed from 'vega-embed'
+import * as d3 from 'd3'
 
 import { Box } from '@mui/system'
 import { DataMonthly, DataWeekly, DataYearly } from '../types/Data'
+import { Diversity3 } from '@mui/icons-material'
 
 type Data = DataMonthly|DataWeekly|DataYearly
 const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:string,districtOut:string,algorithm:string,data:Data[])=>{
   const [dimension,setDimensions] = useState<Dimension>()
+  
   const [spec,setSpec] = useState<Record<string,any>>()
-  const [specGraph,setSpecGraph] = useState<Record<string,any>>()
 
 
   useEffect(()=>{
@@ -30,54 +32,85 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
   useEffect(()=>{
     if(canDraw()){
       const {width,height} = dimension
-      
-      if((districtOut&&districtIn)){
-        const dss = [districtOut,districtIn]
 
+      if((districtOut&&districtIn)){
         let s = {
           width,
           height,
           $schema:'https://vega.github.io/schema/vega-lite/v5.json',
-          rows:1,
-          hconcat:dss.map(d=>({
-              width,
-              height,
-              hconcat:[
+          columns:3,
+          hconcat:[
+            {
+              width:width/3,
+              height,              
+              "data": {
+              "url": `/static/data/maldiva.${districtOut}.topojson.json`,
+              "format": {
+                "type": "topojson",
+                "feature": "collection"
+              }
+              },
+              "projection": {
+                "type": "mercator",
+              },
+              layer:[
                 {
-                  "data": {
-                  "url": `/static/data/maldiva.${d}.topojson.json`,
-                  "format": {
-                    "type": "topojson",
-                    "feature": "collection"
+                  name:'districtOut',
+                  "mark": {
+                    "type": "geoshape",
+                    "fill": "lightgray",
+                    "stroke": "white",
+                    tooltip:districtOut
                   }
-                  },
-                  "projection": {
-                    "type": "mercator",
-                  },
-                  layer:[
-                    {
-                      "mark": {
-                        "type": "geoshape",
-                        "fill": "lightgray",
-                        "stroke": "white",
-                        tooltip:d
-                      }
-                    },
-                    {
-                      mark:{
-                        type:'text',
-                        text:d,
-                        fontWeight:'bold',
-                        color:'black'
-                      }
-                    }
-                  ]
                 },
-                ... genBarGraphSpec(d)
+                {
+                  mark:{
+                    type:'text',
+                    text:`From ${districtOut}`,
+                    fontWeight:'bold',
+                    color:'black'
+                  }
+                }
               ]
-          }))
-        }
-      setSpec(s);
+            },
+            {
+              width:width/3,
+              height,  
+              "data": {
+              "url": `/static/data/maldiva.${districtIn}.topojson.json`,
+              "format": {
+                "type": "topojson",
+                "feature": "collection"
+              }
+              },
+              "projection": {
+                "type": "mercator",
+              },
+              layer:[
+                {
+                  name:'districtIn',
+                  "mark": {
+                    "type": "geoshape",
+                    "fill": "lightgray",
+                    "stroke": "white",
+                    tooltip:districtIn
+                  }
+                },
+                {
+                  mark:{
+                    type:'text',
+                    text:`To ${districtIn}`,
+                    fontWeight:'bold',
+                    color:'black'
+                  }
+                }
+              ]
+            },
+            ... genBarGraphSpec(districtIn,width/3,height)
+            ]
+          }
+          
+          setSpec(s);
 
       } 
       else{
@@ -85,11 +118,10 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
           width,
           height,
           $schema:'https://vega.github.io/schema/vega-lite/v5.json',
-          rows:district.length,
-          vconcat:district.map(d=>({
+          columns:2,
+          hconcat:district.map(d=>({
               width,
               height,
-              columns:3,
               hconcat:[
                 {
                   "data": {
@@ -121,34 +153,37 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
                     }
                   ]
                 },
-                ... genBarGraphSpec(d)
+                ... genBarGraphSpec(d,width/3,height)
               ]
           }))
         }
       setSpec(s);
 
       } 
+
+      
     }
+    
   },[dimension,district,algorithm,data])
 
-  const genBarGraphSpec = (d:string)=>{
+  const genBarGraphSpec = (d:string,width,height)=>{
     switch(algorithm){
       case 'movement':
-        return genBarGraphSpecForMovement(d)
+        return genBarGraphSpecForMovement(d,width,height)
       case 'density':
-          return genBarGraphSpecForDensity(d)
+          return genBarGraphSpecForDensity(d,width,height)
       case 'subscribers':
-          return genBarGraphSpecForSubscribers(d)
+          return genBarGraphSpecForSubscribers(d,width,height)
       case 'events':
-          return genBarGraphSpecForEvents(d)    
+          return genBarGraphSpecForEvents(d,width,height)    
 
     }
   }
 
-  const genBarGraphSpecForMovement = (d:string)=>{
+  const genBarGraphSpecForMovement = (d:string,width:number,height:number)=>{
     return [{
-      width:300,
-      height:300,
+      width,
+      height,
       data:{
         values:data
       },
@@ -198,10 +233,10 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
     }]
   }
 
-  const genBarGraphSpecForDensity = (d:string)=>{
+  const genBarGraphSpecForDensity = (d:string,width:number,height:number)=>{
     return [{
-      width:300,
-      height:300,
+      width,
+      height,
       data:{
         values:data
       },
@@ -251,10 +286,10 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
     }]
   }
 
-  const genBarGraphSpecForSubscribers = (d:string)=>{
+  const genBarGraphSpecForSubscribers = (d:string,width:number,height:number)=>{
     return [{
-      width:300,
-      height:300,
+      width,
+      height,
       data:{
         values:data
       },
@@ -304,11 +339,11 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
     }]
   }
 
-  const genBarGraphSpecForEvents = (d:string)=>{
+  const genBarGraphSpecForEvents = (d:string,width:number,height:number)=>{
     return [
       {
-        width:300,
-        height:300,
+        width,
+        height,
         data:{
           values:data
         },
@@ -357,8 +392,8 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
         ]
       },
       {
-        width:300,
-        height:300,
+        width,
+        height,
         data:{
           values:data
         },
@@ -407,8 +442,8 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
         ]
       },
       {
-        width:300,
-        height:300,
+        width,
+        height,
         data:{
           values:data
         },
@@ -458,9 +493,76 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
       }
     ]
   }
-  
-  if(canDraw() && spec)
-    embed('#map',spec,{renderer:'svg'})
+
+  // if(canDraw() && spec)
+  //   embed('#map',spec,{renderer:'svg'})
+  if(canDraw() && spec){
+    const p = new Promise((resolve,reject)=>{
+      resolve(embed('#map',spec,{renderer:'svg'}))
+    }).then(r=>{
+      if(!(districtIn&&districtOut))return;
+      const out = d3.select(".districtOut_marks")
+      const outPath = out.select("path")
+      let psOut = {bounds:undefined}
+      outPath.each(p=>{
+        psOut.bounds = p.bounds
+      })
+
+      const IN = d3.select(".districtIn_marks")
+      const inPath = IN.select("path")
+      let psIn = {bounds:undefined}
+      inPath.each(p=>{
+        psIn.bounds = p.bounds
+      })
+
+      const drawCircle = (ps,g)=>{
+        if(ps.bounds){
+          const {x2,x1,y2,y1} = ps.bounds;
+          const m ={
+            x:(x1+x2)/2,
+            y:(y1+y2)/2
+          } 
+          g.append('circle') 
+            .attr('cx', m.x)
+            .attr('cy', m.y+10)
+            .attr('r', 5)
+            .attr('stroke', 'gray')
+            .attr('fill', '#1976d2');
+            return {x:m.x,y:m.y+10};
+        }  
+        return undefined;
+      }
+
+      const drawLine = (m1,m2)=>{
+        const points = [{x:m1.x,y:m1.y},{x:m2.x,y:m2.y}]
+        const lineFunc = d3.line()
+          .x(function(d) { return d.x })
+          .y(function(d) { return d.y })
+
+        const g = d3.select('svg > g')
+        g.append('path')
+        .attr('d', lineFunc(points))
+        .attr('stroke', '#1976d2')
+        .attr('fill', 'none');
+
+      }
+
+      const pOut = drawCircle(psOut,out)
+      const pIn = drawCircle(psIn,IN)
+      console.log('pOut',pOut)
+      console.log('pIn',pIn)
+
+      if(pOut && pIn)
+        drawLine(pOut,{x:pOut.x+(dimension.width/3)+dimension.margin,y:pOut.y})
+      
+        console.log('svg',out)
+
+    })
+    
+  }
+    
+
+
   
   const Map:React.FC = ()=>{
       return <Box sx={{marginBottom:'4em'}}>
