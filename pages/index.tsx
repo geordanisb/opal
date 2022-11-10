@@ -69,10 +69,12 @@ const Home:NextPage<Props> = (props) => {
   const [location,setLocation] = useState<number|string>(1)
   const [periodType,setPeriodType] = useState<string>('weekly')
 
-  const [years,setYears] = useState<string[]>([])
+  const [years,setYears] = useState<string>('')
 
-  const [months,setMonths] = useState<string[]>([])
-  const [weeks,setWeeks] = useState<string[]>([])
+  const [months,setMonths] = useState<string>('')
+  const [weekFrom,setWeekFrom] = useState<string>('')
+  const [weekTo,setWeekTo] = useState<string>('')
+
 
   const [data,setData] = useState<(DataMonthly|DataWeekly|DataYearly)[]>([])
 
@@ -120,24 +122,37 @@ const Home:NextPage<Props> = (props) => {
 
   const onChangeYears = (e)=>{
     setYears(e.target.value)
-    setMonths([])
+    setMonths('')
     setData(()=>[])    
   }
 
   const onChangeMonths = (e)=>{
     setMonths(e.target.value)
-    setWeeks([])
+    setWeekFrom('')
+    setWeekTo('')
+
     setData(()=>[])    
   }
 
-  const onChangeWeeks = (e)=>{
-    setWeeks(e.target.value)
+  const onChangeWeekFrom = (e)=>{
+    setWeekFrom(e.target.value)
+    setData(()=>[])    
+  }
+
+  const onChangeWeekTo = (e)=>{
+    setWeekTo(e.target.value)
     setData(()=>[])    
   }
 
   const validDates = ()=>{
     // if(date && to)
     //     return moment(from).isSameOrBefore(moment(to))
+    if(periodType=='weekly')
+        return years && months && weekFrom && weekTo
+    else if(periodType=='monthly')
+        return years && months
+    else if(periodType=='yearly')
+        return years   
     return true
   }
   const isValidForm = ()=>{
@@ -174,9 +189,10 @@ const Home:NextPage<Props> = (props) => {
     setLocation(1)
     setDistrict([])
     setPeriodType('weekly')
-    setYears([])
-    setMonths([])
-    setWeeks([])
+    setYears('')
+    setMonths('')
+    setWeekFrom('')
+    setWeekTo('')
     setData([])
   }
 
@@ -211,27 +227,27 @@ const Home:NextPage<Props> = (props) => {
     e.preventDefault()
     setLoading(true)
     let d=[];
-    if(periodType == 'weekly' && weeks?.length){
-        const wq = weeks.map(w=>{
-            return w.split('-')
-        })
+    if(periodType == 'weekly' && weekFrom&&weekTo){
+        const date_from = moment(weekFrom.split('-')[0],'DD-MM-YYYY')
+        const date_to = moment(weekTo.split('-')[1],'DD-MM-YYYY')
+
         d = props.data.weekly.filter(i=>{
-            const idx = wq.findIndex(j=>{
-                const [date_from,date_to]=j
-                return i.date_from == date_from && i.date_to == date_to
-            })
-            return idx >= 0
-            
+            const df = moment(i.date_from,'DD-MM-YYYY')
+            const dt = moment(i.date_to,'DD-MM-YYYY')
+            const q1 = df.isBetween(date_from,date_to,undefined,'[]')
+            const q2 = dt.isBetween(date_from,date_to,undefined,'[]')
+            return q1 && q2
         })
+        console.log('d',d)
     }
-    else if(periodType == 'monthly' && months?.length){
+    else if(periodType == 'monthly' && months){
         d = props.data.monthly.filter(i=>{
-            return months.includes(i.date)
+            return months == i.date
         })
     }
-    else if(periodType == 'yearly' && years?.length){
+    else if(periodType == 'yearly' && years){
         d = props.data.yearly.filter(i=>{
-            return years.includes(i.date)
+            return years == i.date
         })
     }
     
@@ -282,22 +298,34 @@ const Home:NextPage<Props> = (props) => {
         return months.map(y=><MenuItem key={y} value={`${y}`}>{y}</MenuItem>)
     }
 
-    const renderWeeksMenuItems = ()=>{
+    const renderWeeksMenuItems = (validateTo=false)=>{
         let weeks = []
         if(periodType=='weekly'){
             props.data.weekly.reduce((p,c)=>{
                 const k = `${c.date_from}-${c.date_to}`
-                if(years?.length && months?.length){
+                if(years && months && weekFrom && validateTo){
                     const cy = moment(c.date_from,'DD-MM-YYYY')
                     if(years.includes(cy.year().toString())){
-                        if(months.map(i=>+i.split('-')[1]).includes(cy.month()+1))
+                        if(months.split('-')[1].includes(`${cy.month()+1}`)){
+                            const [date_from,date_to] = weekFrom.split('-')
+                            if(moment(c.date_to,'DD-MM-YYYY').isAfter(moment(date_to,'DD-MM-YYYY')))
+                                p.push(k)
+
+                        }
+                    }
+                    return p;
+                }
+                else if(years && months){
+                    const cy = moment(c.date_from,'DD-MM-YYYY')
+                    if(years.includes(cy.year().toString())){
+                        if(months.split('-')[1].includes(`${cy.month()+1}`))
                             p.push(k)
                     }
                     return p;
                 }
                 else if(years){
                     const cy = moment(c.date_from,'DD-MM-YYYY')
-                    if(years.includes(cy.year().toString())){
+                    if(years==cy.year().toString()){
                         p.push(k)
                     }
                     return p;
@@ -316,17 +344,21 @@ const Home:NextPage<Props> = (props) => {
 
     const renderBreadcrumbs = ()=>{
         const renderDateBreadcrumb =()=>{
-            if(periodType=='weekly')
+            if(periodType=='weekly' && weekFrom && weekTo){
+                const df = weekFrom.split('-')[0]
+                const dt = weekTo.split('-')[1]
                 return <Typography fontWeight={'bold'}>
-                    {weeks.join(', ')}
-            </Typography>
-            else if(periodType=='monthly')
-                return <Typography fontWeight={'bold'}>
-                    {months.join(', ')}
+                    {[df,dt].join('-')}
                 </Typography>
+            }
+            else if(periodType=='monthly' && months){
+                return <Typography fontWeight={'bold'}>
+                    {months}
+                </Typography>
+            }
             else if(periodType=='yearly' && years)
                 return <Typography fontWeight={'bold'}>
-                    {years.join(', ')}
+                    {years}
                 </Typography>
         }
         return <Breadcrumbs aria-label="breadcrumb" separator={<NavigateNext/>}>
@@ -424,28 +456,26 @@ const Home:NextPage<Props> = (props) => {
     const renderDateControls = ()=>{
         if(periodType=='weekly'){
             return <Grid container spacing={1}>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={6}>
                 <FormControl fullWidth>
-                    <InputLabel id="select-years">Select the years you want to explore.</InputLabel>
+                    <InputLabel id="select-years">Select the year you want to explore.</InputLabel>
                     <Select
                     labelId="select-years"
                     value={years}
-                    label="Select the years you want to explore."
-                    multiple
+                    label="Select the year you want to explore."
                     onChange={onChangeYears}
                     >
                         {renderYearsMenuItems()}
                     </Select>
                 </FormControl>
             </Grid>
-            <Grid item xs={12} md={8}>
+            <Grid item xs={12} md={6}>
                 <FormControl fullWidth>
-                    <InputLabel id="select-months">Select the months you want to explore.</InputLabel>
+                    <InputLabel id="select-months">Select the month you want to explore.</InputLabel>
                     <Select
                     labelId="select-months"
                     value={months}
-                    label="Select the months you want to explore."
-                    multiple
+                    label="Select the month you want to explore."
                     onChange={onChangeMonths}
                     >
                         {renderMonthsMenuItems()}
@@ -453,17 +483,30 @@ const Home:NextPage<Props> = (props) => {
                 </FormControl>
 
             </Grid>
-            <Grid item xs={12}>
+            <Grid item xs={6}>
                 <FormControl fullWidth>
-                    <InputLabel id="select-months">Select the weeks you want to explore.</InputLabel>
+                    <InputLabel id="select-week-from">Select the week you want to explore from.</InputLabel>
                     <Select
-                    labelId="select-weeks"
-                    value={weeks}
-                    label="Select the weeks you want to explore."
-                    multiple
-                    onChange={onChangeWeeks}
+                    labelId="select-week-from"
+                    value={weekFrom}
+                    label="Select the week you want to explore."
+                    onChange={onChangeWeekFrom}
                     >
                         {renderWeeksMenuItems()}
+                    </Select>
+                </FormControl>
+
+            </Grid>
+            <Grid item xs={6}>
+                <FormControl fullWidth>
+                    <InputLabel id="select-week-to">Select the week you want to explore to.</InputLabel>
+                    <Select
+                    labelId="select-week-to"
+                    value={weekTo}
+                    label="Select the week you want to explore."
+                    onChange={onChangeWeekTo}
+                    >
+                        {renderWeeksMenuItems(true)}
                     </Select>
                 </FormControl>
 
@@ -496,7 +539,6 @@ const Home:NextPage<Props> = (props) => {
                         labelId="select-years"
                         value={years}
                         label="Select the years you want to explore."
-                        multiple
                         onChange={onChangeYears}
                         >
                             {renderYearsMenuItems()}
@@ -510,7 +552,6 @@ const Home:NextPage<Props> = (props) => {
                         labelId="select-months"
                         value={months}
                         label="Select the months you want to explore."
-                        multiple
                         onChange={onChangeMonths}
                         >
                             {renderMonthsMenuItems()}
@@ -529,7 +570,6 @@ const Home:NextPage<Props> = (props) => {
                                 labelId="select-years"
                                 value={years}
                                 label="Select the years you want to explore."
-                                multiple
                                 onChange={onChangeYears}
                                 >
                                     {renderYearsMenuItems()}
@@ -544,14 +584,6 @@ const Home:NextPage<Props> = (props) => {
             </Box>
         }
         return <></>
-    }
-
-    const onKeyUpYear = (e)=>{
-        if(e.key=='Enter'){
-            const v = e.target.value;
-            setYears((y)=>[...y,v])
-            e.target.value=''
-        }
     }
 
     const onChangePeriodType = (e)=>{
