@@ -6,7 +6,7 @@ import { Box } from '@mui/system'
 import { DataMonthly, DataWeekly, DataYearly } from '../types/Data'
 
 type Data = DataMonthly|DataWeekly|DataYearly
-const useDrawMapAndGraphByDistrictVegaLite = (district:string[],data:Data[])=>{
+const useDrawMapAndGraphByDistrictVegaLite = (district:string[],algorithm:string,data:Data[])=>{
   const [dimension,setDimensions] = useState<Dimension>()
   const [spec,setSpec] = useState<Record<string,any>>()
   const [specGraph,setSpecGraph] = useState<Record<string,any>>()
@@ -23,7 +23,7 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],data:Data[])=>{
   setDimensions(d)
   },[])
 
-  const canDraw = ()=>dimension && district && district.length && data && data.length
+  const canDraw = ()=>dimension && algorithm && district && district.length && data && data.length
   useEffect(()=>{
     if(canDraw()){
       const {width,height} = dimension
@@ -35,6 +35,7 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],data:Data[])=>{
         vconcat:district.map(d=>({
             width,
             height,
+            columns:3,
             hconcat:[
               {
                 "data": {
@@ -66,61 +67,340 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],data:Data[])=>{
                   }
                 ]
               },
-              {
-                width:300,
-                height:300,
-                data:{
-                  values:data
-                },
-                transform: [
-                  {
-                    filter:`datum.district_out == '${d}' `
-                  },
-                  {
-                    filter:`datum.district_in != '${d}' `
-                  },
-                  {
-                    aggregate:[{
-                      op:'sum',
-                      field:'movement',
-                      as:'movement_sum'
-                    }],
-                    groupby:['district_out','district_in']
-                  }
-                ],
-                encoding: {
-                  "x": {"field": "district_in", "type": "nominal",title:'District In',axis:{labelAngle:0}},
-                  "y": {"field": "movement_sum", type:'quantitative',title:'Movement'},
-                },
-                layer:[
-                  {
-                    mark: {
-                      type:"bar",
-                      cornerRadiusEnd:4,
-                      tooltip:true
-                    },
-                    encoding:{
-                      color: {"field": "district_in", "type": "nominal",title:'District In'}
-                    },
-                  },
-                  {
-                    mark:{
-                      type:'text',
-                      dy:10,
-                      shape:'square',
-                      color:'white',
-                      fontWeight:'bold',
-                    },
-                    encoding:{text:{field:'movement_sum',format:'s'}}
-                  }
-                
-                ]
-              }
+              ... genBarGraphSpec(d)
             ]
         }))
       });
     }
-  },[dimension,district,data])
+  },[dimension,district,algorithm,data])
+
+  const genBarGraphSpec = (d:string)=>{
+    switch(algorithm){
+      case 'movement':
+        return genBarGraphSpecForMovement(d)
+      case 'density':
+          return genBarGraphSpecForDensity(d)
+      case 'subscribers':
+          return genBarGraphSpecForSubscribers(d)
+      case 'events':
+          return genBarGraphSpecForEvents(d)    
+
+    }
+  }
+
+  const genBarGraphSpecForMovement = (d:string)=>{
+    return [{
+      width:300,
+      height:300,
+      data:{
+        values:data
+      },
+      transform: [
+        {
+          filter:`datum.district_out == '${d}' `
+        },
+        {
+          filter:`datum.district_in != '${d}' `
+        },
+        {
+          aggregate:[{
+            op:'mean',
+            field:'movement',
+            as:'movement_mean'
+          }],
+          groupby:['district_out','district_in']
+        }
+      ],
+      encoding: {
+        "x": {"field": "district_in", "type": "nominal",title:'District In',axis:{labelAngle:0}},
+        "y": {"field": "movement_mean", type:'quantitative',title:'Movement (MEAN)'},
+      },
+      layer:[
+        {
+          mark: {
+            type:"bar",
+            cornerRadiusEnd:4,
+            tooltip:true
+          },
+          encoding:{
+            color: {"field": "district_in", "type": "nominal",title:'District In'}
+          },
+        },
+        {
+          mark:{
+            type:'text',
+            dy:10,
+            shape:'square',
+            color:'white',
+            fontWeight:'bold',
+          },
+          encoding:{text:{field:'movement_mean',format:'s'}}
+        }
+      
+      ]
+    }]
+  }
+
+  const genBarGraphSpecForDensity = (d:string)=>{
+    return [{
+      width:300,
+      height:300,
+      data:{
+        values:data
+      },
+      transform: [
+        {
+          filter:`datum.district_out == '${d}' `
+        },
+        {
+          filter:`datum.district_in != '${d}' `
+        },
+        {
+          aggregate:[{
+            op:'mean',
+            field:'density',
+            as:'density_mean'
+          }],
+          groupby:['district_out','district_in']
+        }
+      ],
+      encoding: {
+        "x": {"field": "district_in", "type": "nominal",title:'District In',axis:{labelAngle:0}},
+        "y": {"field": "density_mean", type:'quantitative',title:'Density (MEAN)'},
+      },
+      layer:[
+        {
+          mark: {
+            type:"bar",
+            cornerRadiusEnd:4,
+            tooltip:true
+          },
+          encoding:{
+            color: {"field": "district_in", "type": "nominal",title:'District In'}
+          },
+        },
+        {
+          mark:{
+            type:'text',
+            dy:10,
+            shape:'square',
+            color:'white',
+            fontWeight:'bold',
+          },
+          encoding:{text:{field:'density_mean',format:'s'}}
+        }
+      
+      ]
+    }]
+  }
+
+  const genBarGraphSpecForSubscribers = (d:string)=>{
+    return [{
+      width:300,
+      height:300,
+      data:{
+        values:data
+      },
+      transform: [
+        {
+          filter:`datum.district_out == '${d}' `
+        },
+        {
+          filter:`datum.district_in != '${d}' `
+        },
+        {
+          aggregate:[{
+            op:'mean',
+            field:'subscribers',
+            as:'subscribers_sum'
+          }],
+          groupby:['district_out','district_in']
+        }
+      ],
+      encoding: {
+        "x": {"field": "district_in", "type": "nominal",title:'District In',axis:{labelAngle:0}},
+        "y": {"field": "subscribers_sum", type:'quantitative',title:'Subscribers (MEAN)'},
+      },
+      layer:[
+        {
+          mark: {
+            type:"bar",
+            cornerRadiusEnd:4,
+            tooltip:true
+          },
+          encoding:{
+            color: {"field": "district_in", "type": "nominal",title:'District In'}
+          },
+        },
+        {
+          mark:{
+            type:'text',
+            dy:10,
+            shape:'square',
+            color:'white',
+            fontWeight:'bold',
+          },
+          encoding:{text:{field:'subscribers_sum',format:'s'}}
+        }
+      
+      ]
+    }]
+  }
+
+  const genBarGraphSpecForEvents = (d:string)=>{
+    return [
+      {
+        width:300,
+        height:300,
+        data:{
+          values:data
+        },
+        transform: [
+          {
+            filter:`datum.district_out == '${d}' `
+          },
+          {
+            filter:`datum.district_in != '${d}' `
+          },
+          {
+            aggregate:[{
+              op:'sum',
+              field:'average_call_duration',
+              as:'average_call_duration_sum'
+            }],
+            groupby:['district_out','district_in']
+          }
+        ],
+        encoding: {
+          "x": {"field": "district_in", "type": "nominal",title:'District In',axis:{labelAngle:0}},
+          "y": {"field": "average_call_duration_sum", type:'quantitative',title:'Average call duration (SUM)'},
+        },
+        layer:[
+          {
+            mark: {
+              type:"bar",
+              cornerRadiusEnd:4,
+              tooltip:true
+            },
+            encoding:{
+              color: {"field": "district_in", "type": "nominal",title:'District In'}
+            },
+          },
+          {
+            mark:{
+              type:'text',
+              dy:10,
+              shape:'square',
+              color:'white',
+              fontWeight:'bold',
+            },
+            encoding:{text:{field:'average_call_duration_sum',format:'s'}}
+          }
+        
+        ]
+      },
+      {
+        width:300,
+        height:300,
+        data:{
+          values:data
+        },
+        transform: [
+          {
+            filter:`datum.district_out == '${d}' `
+          },
+          {
+            filter:`datum.district_in != '${d}' `
+          },
+          {
+            aggregate:[{
+              op:'sum',
+              field:'sms_out',
+              as:'sms_in_sum'
+            }],
+            groupby:['district_out','district_in']
+          }
+        ],
+        encoding: {
+          "x": {"field": "district_in", "type": "nominal",title:'District In',axis:{labelAngle:0}},
+          "y": {"field": "sms_in_sum", type:'quantitative',title:'SMS in (SUM)'},
+        },
+        layer:[
+          {
+            mark: {
+              type:"bar",
+              cornerRadiusEnd:4,
+              tooltip:true
+            },
+            encoding:{
+              color: {"field": "district_in", "type": "nominal",title:'District In'}
+            },
+          },
+          {
+            mark:{
+              type:'text',
+              dy:10,
+              shape:'square',
+              color:'white',
+              fontWeight:'bold',
+            },
+            encoding:{text:{field:'sms_in_sum',format:'s'}}
+          }
+        
+        ]
+      },
+      {
+        width:300,
+        height:300,
+        data:{
+          values:data
+        },
+        transform: [
+          {
+            filter:`datum.district_out == '${d}' `
+          },
+          {
+            filter:`datum.district_in != '${d}' `
+          },
+          {
+            aggregate:[{
+              op:'sum',
+              field:'sms_out',
+              as:'sms_out_sum'
+            }],
+            groupby:['district_out','district_in']
+          }
+        ],
+        encoding: {
+          "x": {"field": "district_in", "type": "nominal",title:'District In',axis:{labelAngle:0}},
+          "y": {"field": "sms_out_sum", type:'quantitative',title:'SMS out (SUM)'},
+        },
+        layer:[
+          {
+            mark: {
+              type:"bar",
+              cornerRadiusEnd:4,
+              tooltip:true
+            },
+            encoding:{
+              color: {"field": "district_in", "type": "nominal",title:'District In'}
+            },
+          },
+          {
+            mark:{
+              type:'text',
+              dy:10,
+              shape:'square',
+              color:'white',
+              fontWeight:'bold',
+            },
+            encoding:{text:{field:'sms_out_sum',format:'s'}}
+          }
+        
+        ]
+      }
+    ]
+  }
   
   if(canDraw() && spec)
     embed('#map',spec,{renderer:'svg'})

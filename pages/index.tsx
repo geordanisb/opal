@@ -5,7 +5,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import React, { useEffect, useState } from 'react';
 import useDrawMapAndGraphByDistrictVegaLite from '@/src/hooks/useDrawMapAndGraphByDistrictVegaLite';
 import { ArrowForward, HighlightOff, NavigateNext } from '@mui/icons-material';
-import moment, { Moment } from 'moment'
+import moment, { Moment, months } from 'moment'
 import { DataMonthly, DataWeekly, DataYearly } from '@/src/types/Data';
 import { DataGrid, GridValueGetterParams } from '@mui/x-data-grid';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -16,10 +16,9 @@ import { NextPage } from 'next';
 
 const algoritms = {
     movement:{name:'Mobility (Travels)',description:"Density: Number of users who spent most of their time in a certain area in a given time interval. "},
-    2:{name:'Density',description:"Density: Number of users who spent most of their time in a certain area in a given time interval. "},
-    3:{name:'Subscribers',description:"Density: Number of users who spent most of their time in a certain area in a given time interval. "},
-    4:{name:'Residents',description:"Density: Number of users who spent most of their time in a certain area in a given time interval. "},
-    5:{name:'Events',description:"Density: Number of users who spent most of their time in a certain area in a given time interval. "},
+    density:{name:'Density',description:"Density: Number of users who spent most of their time in a certain area in a given time interval. "},
+    subscribers:{name:'Subscribers',description:"Density: Number of users who spent most of their time in a certain area in a given time interval. "},
+    events:{name:'Events',description:"Density: Number of users who spent most of their time in a certain area in a given time interval. "},
   }
 const locations = {
 1:'District',
@@ -55,25 +54,10 @@ interface Props{
 
 const Home:NextPage<Props> = (props) => {
   const yearsMap = [2020,2021,2022]
-  const minWidth = '270px';
-  const dateFormat = 'YYYY-MM-DD'
-  const minDate = moment('2020-01-01T00:00:00.000');
-  const maxDate = moment('2034-01-01T00:00:00.000');
 
   const [error,setError] = useState('')
 
-  const [dimensions,setDimensions] = useState<{width:number,height:number}>()
-
-  useEffect(()=>{
-    setDimensions({
-        width:window.innerWidth/2,
-        height:Math.ceil(window.innerHeight/(2))
-
-        // height:Math.ceil(window.innerHeight/(3/2))
-    })
-  },[])
-
-  const [algorithm,setAlgoritm] = useState<number|string>('movement')
+  const [algorithm,setAlgoritm] = useState<string>('movement')
 
   const districts = [
     'Male','Maafushi','Naifaru','Baros','Fuvahmulah'
@@ -82,23 +66,15 @@ const Home:NextPage<Props> = (props) => {
   const [location,setLocation] = useState<number|string>(1)
   const [periodType,setPeriodType] = useState<string>('weekly')
 
-  const [dateFrom,setDateFrom] = useState<Moment>()
-  const [dateTo,setDateTo] = useState<Moment>()
-
-  const [yearFrom,setYearFrom] = useState<Moment>()
   const [years,setYears] = useState<string[]>([])
 
   const [months,setMonths] = useState<string[]>([])
-
-
-  const [dataMonthly,setDataMonthly] = useState<DataMonthly[]>(props.data.monthly)
-  const [dataWeekly,setDataWeekly] = useState<DataWeekly[]>(props.data.weekly)
-  const [dataYearly,setDataYearly] = useState<DataYearly[]>(props.data.yearly)
+  const [weeks,setWeeks] = useState<string[]>([])
 
   const [data,setData] = useState<(DataMonthly|DataWeekly|DataYearly)[]>([])
 
   const [loading,setLoading] = useState(false)
-  const {Map} = useDrawMapAndGraphByDistrictVegaLite(district,data)
+  const {Map} = useDrawMapAndGraphByDistrictVegaLite(district,algorithm,data)
 
   const [drawerShow,setDrawerShow] = useState(true) 
 
@@ -120,11 +96,18 @@ const Home:NextPage<Props> = (props) => {
 
   const onChangeYears = (e)=>{
     setYears(e.target.value)
+    setMonths([])
     setData(()=>[])    
   }
 
   const onChangeMonths = (e)=>{
     setMonths(e.target.value)
+    setWeeks([])
+    setData(()=>[])    
+  }
+
+  const onChangeWeeks = (e)=>{
+    setWeeks(e.target.value)
     setData(()=>[])    
   }
 
@@ -167,6 +150,9 @@ const Home:NextPage<Props> = (props) => {
     setLocation(1)
     setDistrict([])
     setPeriodType('weekly')
+    setYears([])
+    setMonths([])
+    setWeeks([])
     setData([])
   }
 
@@ -200,20 +186,34 @@ const Home:NextPage<Props> = (props) => {
   const submit =  (e)=>{
     e.preventDefault()
     setLoading(true)
-    let d=[];
-    if(periodType == 'yearly' && years?.length){
-        d = props.data.yearly.filter(i=>{
-            return years.includes(i.date)
+    let d=[];debugger;
+    if(periodType == 'weekly' && weeks?.length){
+        const wq = weeks.map(w=>{
+            return w.split('-')
+        })
+        d = props.data.weekly.filter(i=>{
+            const idx = wq.findIndex(j=>{
+                const [date_from,date_to]=j
+                return i.date_from == date_from && i.date_to == date_to
+            })
+            return idx >= 0
+            
         })
     }
-    if(periodType == 'monthly' && months?.length){
+    else if(periodType == 'monthly' && months?.length){
         d = props.data.monthly.filter(i=>{
             return months.includes(i.date)
         })
     }
+    else if(periodType == 'yearly' && years?.length){
+        d = props.data.yearly.filter(i=>{
+            return years.includes(i.date)
+        })
+    }
+    
     setData(d)
-    console.log(d)
     setLoading(false)
+    d.length ? setDrawerShow(false):setDrawerShow(true)
     
     // const url = getAPI_Fetch_URL()
     // fetch(url).then(r=>r.json())
@@ -275,16 +275,47 @@ const Home:NextPage<Props> = (props) => {
         return months.map(y=><MenuItem key={y} value={`${y}`}>{y}</MenuItem>)
     }
 
+    const renderWeeksMenuItems = ()=>{
+        let weeks = []
+        if(periodType=='weekly'){
+            props.data.weekly.reduce((p,c)=>{
+                const k = `${c.date_from}-${c.date_to}`
+                if(years?.length && months?.length){
+                    const cy = moment(c.date_from,'DD-MM-YYYY')
+                    if(years.includes(cy.year().toString())){
+                        if(months.map(i=>+i.split('-')[1]).includes(cy.month()+1))
+                            p.push(k)
+                    }
+                    return p;
+                }
+                else if(years){
+                    const cy = moment(c.date_from,'DD-MM-YYYY')
+                    if(years.includes(cy.year().toString())){
+                        p.push(k)
+                    }
+                    return p;
+                }
+                else{
+                    p.push(k)
+                    return p;
+                }
+            },weeks)
+            weeks =  Array.from(new Set(weeks))
+            return weeks.map(y=><MenuItem key={y} value={`${y}`}>{y}</MenuItem>)
+
+        }
+        return []
+    }
+
     const renderBreadcrumbs = ()=>{
         const renderDateBreadcrumb =()=>{
             if(periodType=='weekly')
                 return <Typography fontWeight={'bold'}>
-                {dateFrom ? moment(dateFrom).format('LL'):''}
-                {dateTo ? ' - '+moment(dateTo).format('LL'):''}
+                    {weeks.join(', ')}
             </Typography>
             else if(periodType=='monthly')
                 return <Typography fontWeight={'bold'}>
-                    {years.join(', ')}
+                    {months.join(', ')}
                 </Typography>
             else if(periodType=='yearly' && years)
                 return <Typography fontWeight={'bold'}>
@@ -301,23 +332,69 @@ const Home:NextPage<Props> = (props) => {
 
     const renderDateControls = ()=>{
         if(periodType=='weekly'){
-            return <Grid container>
-                <Grid item xs={12} md={6}>
-                    <Box sx={{width:minWidth}}>
-                        <Typography variant='body2' fontWeight={'bold'} margin={'.5em 0 0'}>From*</Typography>
-                        {/* <Typography variant='caption' color='default' margin={'0'}>Select the start date</Typography> */}
-                        <CalendarPicker disableHighlightToday date={dateFrom} onChange={(v) => setDateFrom(v)} />
-                    </Box>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                    <Box sx={{width:minWidth}}>
-                        <Typography variant='body2' fontWeight={'bold'} margin={'.5em 0 0'}>To*</Typography>
-                        {/* <Typography variant='caption' color='default' margin={'0'}>Select the end date</Typography> */}
-                        <CalendarPicker disableHighlightToday date={dateTo} onChange={(v) => setDateTo(v)} />
-                    </Box>
-                </Grid>
+            return <Grid container spacing={1}>
+            <Grid item xs={12} md={4}>
+                <FormControl fullWidth>
+                    <InputLabel id="select-years">Select the years you want to explore.</InputLabel>
+                    <Select
+                    labelId="select-years"
+                    value={years}
+                    label="Select the years you want to explore."
+                    multiple
+                    onChange={onChangeYears}
+                    >
+                        {renderYearsMenuItems()}
+                    </Select>
+                </FormControl>
+            </Grid>
+            <Grid item xs={12} md={8}>
+                <FormControl fullWidth>
+                    <InputLabel id="select-months">Select the months you want to explore.</InputLabel>
+                    <Select
+                    labelId="select-months"
+                    value={months}
+                    label="Select the months you want to explore."
+                    multiple
+                    onChange={onChangeMonths}
+                    >
+                        {renderMonthsMenuItems()}
+                    </Select>
+                </FormControl>
 
             </Grid>
+            <Grid item xs={12}>
+                <FormControl fullWidth>
+                    <InputLabel id="select-months">Select the weeks you want to explore.</InputLabel>
+                    <Select
+                    labelId="select-weeks"
+                    value={weeks}
+                    label="Select the weeks you want to explore."
+                    multiple
+                    onChange={onChangeWeeks}
+                    >
+                        {renderWeeksMenuItems()}
+                    </Select>
+                </FormControl>
+
+            </Grid>
+        </Grid>
+            // <Grid container>
+            //     <Grid item xs={12} md={6}>
+            //         <Box sx={{width:minWidth}}>
+            //             <Typography variant='body2' fontWeight={'bold'} margin={'.5em 0 0'}>From*</Typography>
+            //             {/* <Typography variant='caption' color='default' margin={'0'}>Select the start date</Typography> */}
+            //             <CalendarPicker disableHighlightToday date={dateFrom} onChange={(v) => setDateFrom(v)} />
+            //         </Box>
+            //     </Grid>
+            //     <Grid item xs={12} md={6}>
+            //         <Box sx={{width:minWidth}}>
+            //             <Typography variant='body2' fontWeight={'bold'} margin={'.5em 0 0'}>To*</Typography>
+            //             {/* <Typography variant='caption' color='default' margin={'0'}>Select the end date</Typography> */}
+            //             <CalendarPicker disableHighlightToday date={dateTo} onChange={(v) => setDateTo(v)} />
+            //         </Box>
+            //     </Grid>
+
+            // </Grid>
         }
         else if(periodType=='monthly'){
             return <Grid container spacing={1}>
