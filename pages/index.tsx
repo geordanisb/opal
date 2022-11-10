@@ -63,6 +63,9 @@ const Home:NextPage<Props> = (props) => {
     'Male','Maafushi','Naifaru','Baros','Fuvahmulah'
 ]
   const [district,setDistrict] = useState<string[]>([])
+  const [districtIn,setDistrictIn] = useState<string>('')
+  const [districtOut,setDistrictOut] = useState<string>('')
+
   const [location,setLocation] = useState<number|string>(1)
   const [periodType,setPeriodType] = useState<string>('weekly')
 
@@ -74,9 +77,18 @@ const Home:NextPage<Props> = (props) => {
   const [data,setData] = useState<(DataMonthly|DataWeekly|DataYearly)[]>([])
 
   const [loading,setLoading] = useState(false)
-  const {Map} = useDrawMapAndGraphByDistrictVegaLite(district,algorithm,data)
+  const {Map} = useDrawMapAndGraphByDistrictVegaLite(district,districtIn,districtOut,algorithm,data)
 
   const [drawerShow,setDrawerShow] = useState(true) 
+
+  const onChangeAlgoritm = (e)=>{
+    const v = e.target.value
+    setAlgoritm(v)
+    setDistrict(()=>[])
+    setDistrictIn('')
+    setDistrictOut('')
+    setData(()=>[])    
+  }
 
   const onChangeLocation = (e)=>{
     const val = e.target.value;
@@ -92,6 +104,18 @@ const Home:NextPage<Props> = (props) => {
   const onChangeDistrict = (e)=>{
     setDistrict(e.target.value)
     setData(()=>[])    
+  }
+
+  const onChangeDistrictIn = (e)=>{
+    setDistrictIn(e.target.value)
+    setDistrict([])
+    setData([])    
+  }
+
+  const onChangeDistrictOut = (e)=>{
+    setDistrictOut(e.target.value)
+    setDistrict([])
+    setData([])    
   }
 
   const onChangeYears = (e)=>{
@@ -117,7 +141,7 @@ const Home:NextPage<Props> = (props) => {
     return true
   }
   const isValidForm = ()=>{
-    return algorithm && location && district && district.length  && validDates()
+    return algorithm && location && (district&&district.length || districtIn&&districtOut)  && validDates()
   }
 
 //   const onChangeDate = (name,e)=>{
@@ -238,23 +262,6 @@ const Home:NextPage<Props> = (props) => {
       setDrawerShow(s=>!s);
     };
 
-  
-
-    // {(['left', 'right', 'top', 'bottom'] as const).map((anchor) => (
-    //     <Box key={anchor}>
-    //       <Button onClick={toggleDrawer}>{anchor}</Button>
-    //       <Drawer
-    //         anchor={'left'}
-    //         open={drawerShow}
-    //        onClose={()=>setDrawerShow(false)}
-    //       >
-    //        <>
-    //        geo 123
-    //        </> 
-    //       </Drawer>
-    //     </Box>
-    //   ))}
-
 
     const renderAlgoritmMenuItems = ()=>{
         return Object.entries(algoritms).map(([k,v])=>{
@@ -328,6 +335,90 @@ const Home:NextPage<Props> = (props) => {
             {locations[location]?<Typography fontWeight={'bold'}>{locations[location]}</Typography>:undefined}
             {renderDateBreadcrumb()}
         </Breadcrumbs>
+    }
+
+    const renderDistrictControls = ()=>{
+        
+        if(location == 1){
+            const boths = ['movement','events'].includes(algorithm)
+            const din = <Box marginTop={'.5em'}>
+            <Typography variant='body2' fontWeight={'bold'} marginBottom='1em'>District In*</Typography>
+            <FormControl fullWidth>
+            <InputLabel id="disctrict-in-lbl">District</InputLabel>
+            <Select
+            labelId="disctrict-in-lbl"
+            id="disctrict-in"
+            value={districtIn}
+            label="District"
+            onChange={onChangeDistrictIn}
+            renderValue={(selected) => (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    <Chip label={selected} />
+                </Box>
+                )}
+            >
+                {districts.filter(i=>i!=districtOut).map(d=><MenuItem key={d} value={d}>
+                    {d}
+                </MenuItem>)}
+            </Select>
+        </FormControl>
+            </Box>
+            const dout = <Box marginTop={'.5em'}>
+            <Typography variant='body2' fontWeight={'bold'} marginBottom='1em'>District Out*</Typography>
+            <FormControl fullWidth>
+            <InputLabel id="disctrict-out-lbl">District</InputLabel>
+            <Select
+            labelId="disctrict-out-lbl"
+            id="disctrict-out"
+            value={districtOut}
+            label="District"
+            onChange={onChangeDistrictOut}
+            renderValue={(selected) => (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    <Chip label={selected} />
+                </Box>
+                )}
+            >
+                {districts.map(d=><MenuItem key={d} value={d}>
+                    {d}
+                </MenuItem>)}
+            </Select>
+        </FormControl>
+            </Box>
+            if(boths){
+                return <Grid container spacing={1}>
+                    <Grid item xs={12} sm={6}>{dout}</Grid>
+                    <Grid item xs={12} sm={6}>{din}</Grid>
+                </Grid>
+            }
+            else
+                return <Box marginTop={'.5em'}>
+                <Typography variant='body2' fontWeight={'bold'} marginBottom='1em'>District*</Typography>
+                <FormControl fullWidth>
+                <InputLabel id="disctrict-lbl">District</InputLabel>
+                <Select
+                labelId="disctrict-lbl"
+                id="disctrict-select"
+                value={district}
+                label="District"
+                multiple
+                onChange={onChangeDistrict}
+                renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {selected.map((value) => (
+                        <Chip key={value} label={value} />
+                        ))}
+                    </Box>
+                    )}
+                >
+                {districts.map(d=><MenuItem key={d} value={d}>
+                    {d}
+                </MenuItem>)}
+                </Select>
+            </FormControl>
+                </Box>
+        }
+        return <></>
     }
 
     const renderDateControls = ()=>{
@@ -490,23 +581,22 @@ const Home:NextPage<Props> = (props) => {
                 <Drawer anchor={'left'} open={drawerShow} onClose={()=>setDrawerShow(false)}>
                     <Box padding={{md:4,xs:1}}>
                         <Box>
-                    <IconButton color="primary" edge="end" onClick={toggleDrawer}> 
-                        <ChevronLeftIcon />
-                        <Typography color='primary' fontWeight={'bold'} textTransform={'uppercase'} variant='h6'>ASK A QUESTION</Typography>
-                    </IconButton>
+                            <IconButton color="primary" edge="end" onClick={toggleDrawer}> 
+                                <ChevronLeftIcon />
+                                <Typography color='primary' fontWeight={'bold'} textTransform={'uppercase'} variant='h6'>ASK A QUESTION</Typography>
+                            </IconButton>
                             <Typography component='p'>To do so, select a topic of interest, and set of parameters (location and timeframe).</Typography>
-                            <p></p>
                         </Box>
                         <Box marginTop={'.5em'}>
                             <Typography variant='body2' fontWeight={'bold'} marginBottom='1em'>Topic*</Typography>
                             <FormControl fullWidth>
                                 <InputLabel id="select-mark">Select the algorithm you want to explore.</InputLabel>
                                 <Select
-                                labelId="select-mark"
+                                labelId="select-algorithm"
                                 id="demo-simple-select"
                                 value={algorithm}
                                 label="Select the algorithm you want to explore."
-                                onChange={(e)=>setAlgoritm(e.target.value)}
+                                onChange={onChangeAlgoritm}
                                 >
                                     {renderAlgoritmMenuItems()}
                                 </Select>
@@ -531,31 +621,7 @@ const Home:NextPage<Props> = (props) => {
                                 </Select>
                             </FormControl>
                         </Box>
-                        {location==1 ?<Box marginTop={'.5em'}>
-                            <Typography variant='body2' fontWeight={'bold'} marginBottom='1em'>District*</Typography>
-                            <FormControl fullWidth>
-                            <InputLabel id="disctrict-lbl">District</InputLabel>
-                            <Select
-                            labelId="disctrict-lbl"
-                            id="disctrict-select"
-                            value={district}
-                            label="District"
-                            multiple
-                            onChange={onChangeDistrict}
-                            renderValue={(selected) => (
-                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                    {selected.map((value) => (
-                                    <Chip key={value} label={value} />
-                                    ))}
-                                </Box>
-                                )}
-                            >
-                            {districts.map(d=><MenuItem key={d} value={d}>
-                                {d}
-                            </MenuItem>)}
-                            </Select>
-                        </FormControl>
-                        </Box>:<></>}
+                        {renderDistrictControls()}
                         <Box>
                         <FormControl>
                             <FormLabel id="demo-controlled-radio-buttons-group">

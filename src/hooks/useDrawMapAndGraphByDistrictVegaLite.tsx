@@ -6,7 +6,7 @@ import { Box } from '@mui/system'
 import { DataMonthly, DataWeekly, DataYearly } from '../types/Data'
 
 type Data = DataMonthly|DataWeekly|DataYearly
-const useDrawMapAndGraphByDistrictVegaLite = (district:string[],algorithm:string,data:Data[])=>{
+const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:string,districtOut:string,algorithm:string,data:Data[])=>{
   const [dimension,setDimensions] = useState<Dimension>()
   const [spec,setSpec] = useState<Record<string,any>>()
   const [specGraph,setSpecGraph] = useState<Record<string,any>>()
@@ -23,54 +23,111 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],algorithm:string
   setDimensions(d)
   },[])
 
-  const canDraw = ()=>dimension && algorithm && district && district.length && data && data.length
+  const canDraw = ()=>dimension && algorithm 
+    && ((district&&district.length) || (districtIn&&districtOut)) 
+    && data && data.length
+
   useEffect(()=>{
     if(canDraw()){
       const {width,height} = dimension
-      setSpec({
-        width,
-        height,
-        $schema:'https://vega.github.io/schema/vega-lite/v5.json',
-        rows:district.length,
-        vconcat:district.map(d=>({
-            width,
-            height,
-            columns:3,
-            hconcat:[
-              {
-                "data": {
-                "url": `/static/data/maldiva.${d}.topojson.json`,
-                "format": {
-                  "type": "topojson",
-                  "feature": "collection"
-                }
-                },
-                "projection": {
-                  "type": "mercator",
-                },
-                layer:[
-                  {
-                    "mark": {
-                      "type": "geoshape",
-                      "fill": "lightgray",
-                      "stroke": "white",
-                      tooltip:d
-                    }
-                  },
-                  {
-                    mark:{
-                      type:'text',
-                      text:d,
-                      fontWeight:'bold',
-                      color:'black'
-                    }
+      
+      if((districtOut&&districtIn)){
+        const dss = [districtOut,districtIn]
+
+        let s = {
+          width,
+          height,
+          $schema:'https://vega.github.io/schema/vega-lite/v5.json',
+          rows:1,
+          hconcat:dss.map(d=>({
+              width,
+              height,
+              hconcat:[
+                {
+                  "data": {
+                  "url": `/static/data/maldiva.${d}.topojson.json`,
+                  "format": {
+                    "type": "topojson",
+                    "feature": "collection"
                   }
-                ]
-              },
-              ... genBarGraphSpec(d)
-            ]
-        }))
-      });
+                  },
+                  "projection": {
+                    "type": "mercator",
+                  },
+                  layer:[
+                    {
+                      "mark": {
+                        "type": "geoshape",
+                        "fill": "lightgray",
+                        "stroke": "white",
+                        tooltip:d
+                      }
+                    },
+                    {
+                      mark:{
+                        type:'text',
+                        text:d,
+                        fontWeight:'bold',
+                        color:'black'
+                      }
+                    }
+                  ]
+                },
+                ... genBarGraphSpec(d)
+              ]
+          }))
+        }
+      setSpec(s);
+
+      } 
+      else{
+        let s = {
+          width,
+          height,
+          $schema:'https://vega.github.io/schema/vega-lite/v5.json',
+          rows:district.length,
+          vconcat:district.map(d=>({
+              width,
+              height,
+              columns:3,
+              hconcat:[
+                {
+                  "data": {
+                  "url": `/static/data/maldiva.${d}.topojson.json`,
+                  "format": {
+                    "type": "topojson",
+                    "feature": "collection"
+                  }
+                  },
+                  "projection": {
+                    "type": "mercator",
+                  },
+                  layer:[
+                    {
+                      "mark": {
+                        "type": "geoshape",
+                        "fill": "lightgray",
+                        "stroke": "white",
+                        tooltip:d
+                      }
+                    },
+                    {
+                      mark:{
+                        type:'text',
+                        text:d,
+                        fontWeight:'bold',
+                        color:'black'
+                      }
+                    }
+                  ]
+                },
+                ... genBarGraphSpec(d)
+              ]
+          }))
+        }
+      setSpec(s);
+
+      } 
     }
   },[dimension,district,algorithm,data])
 
