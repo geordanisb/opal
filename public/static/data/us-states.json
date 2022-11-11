@@ -1,0 +1,7 @@
+[
+  {"movement":34000,"id":15,"lon":-157.826182, "lat":21.30895, "state":"Hawaii", "city":"Honolulu"},
+  {"movement":134000,"id":26,"lon":-84.5467, "lat":42.7335, "state":"Michigan", "city":"Lansing"},
+  {"movement":44000,"id":48,"lon":-97.75, "lat":30.266667, "state":"Texas", "city":"Austin"},
+  {"movement":74000,"id":53,"lon":-122.893077, "lat":47.042418, "state":"Washington", "city":"Olympia"},
+  {"movement":994000,"id":54,"lon":-81.633294, "lat":38.349497, "state":"West Virginia", "city":"Charleston"}
+]

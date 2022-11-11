@@ -125,25 +125,24 @@ const obj = [
               "url": "/static/data/us-10m.json",
               "format": {
                 "type": "topojson",
-                "feature": "counties"
+                "feature": "states"
               }
             },
             "transform": [
               {
                 // filter:"(datum.id==1001)"
-
-                filter:"(datum.id==1001) || (datum.id==1003) || (datum.id==1005) || (datum.id==1007) || (datum.id==1009)"
+                filter:"(datum.id==15) || (datum.id==26) || (datum.id==48) || (datum.id==53) || (datum.id==54)"
               },
               
               {
                 "lookup": "id",
                 "from": {
-                  // "data": {
-                  //   "url": "/static/data/unemployment.tsv"
-                  // },
-                  data:{
-                    values:obj
+                  "data": {
+                    "url": "/static/data/us-states.json"
                   },
+                  // data:{
+                  //   values:obj
+                  // },
                   "key": "id",
                   "fields": ["movement"]
                 }
