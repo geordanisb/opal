@@ -148,7 +148,7 @@ const Home:NextPage<Props> = (props) => {
     // if(date && to)
     //     return moment(from).isSameOrBefore(moment(to))
     if(periodType=='weekly')
-        return years && months && weekFrom && weekTo
+        return weekFrom && weekTo
     else if(periodType=='monthly')
         return years && months
     else if(periodType=='yearly')
@@ -303,33 +303,29 @@ const Home:NextPage<Props> = (props) => {
         if(periodType=='weekly'){
             props.data.weekly.reduce((p,c)=>{
                 const k = `${c.date_from}-${c.date_to}`
-                if(years && months && weekFrom && validateTo){
+                if(weekFrom && validateTo){
                     const cy = moment(c.date_from,'DD-MM-YYYY')
-                    if(years.includes(cy.year().toString())){
-                        if(months.split('-')[1].includes(`${cy.month()+1}`)){
-                            const [date_from,date_to] = weekFrom.split('-')
-                            if(moment(c.date_to,'DD-MM-YYYY').isAfter(moment(date_to,'DD-MM-YYYY')))
-                                p.push(k)
-
-                        }
-                    }
-                    return p;
-                }
-                else if(years && months){
-                    const cy = moment(c.date_from,'DD-MM-YYYY')
-                    if(years.includes(cy.year().toString())){
-                        if(months.split('-')[1].includes(`${cy.month()+1}`))
-                            p.push(k)
-                    }
-                    return p;
-                }
-                else if(years){
-                    const cy = moment(c.date_from,'DD-MM-YYYY')
-                    if(years==cy.year().toString()){
+                    const [date_from,date_to] = weekFrom.split('-')
+                    if(moment(c.date_to,'DD-MM-YYYY').isAfter(moment(date_to,'DD-MM-YYYY')))
                         p.push(k)
-                    }
+
                     return p;
                 }
+                // else if(years && months){
+                //     const cy = moment(c.date_from,'DD-MM-YYYY')
+                //     if(years.includes(cy.year().toString())){
+                //         if(months.split('-')[1].includes(`${cy.month()+1}`))
+                //             p.push(k)
+                //     }
+                //     return p;
+                // }
+                // else if(years){
+                //     const cy = moment(c.date_from,'DD-MM-YYYY')
+                //     if(years==cy.year().toString()){
+                //         p.push(k)
+                //     }
+                //     return p;
+                // }
                 else{
                     p.push(k)
                     return p;
@@ -456,33 +452,7 @@ const Home:NextPage<Props> = (props) => {
     const renderDateControls = ()=>{
         if(periodType=='weekly'){
             return <Grid container spacing={1}>
-            <Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                    <InputLabel id="select-years">Select the year you want to explore.</InputLabel>
-                    <Select
-                    labelId="select-years"
-                    value={years}
-                    label="Select the year you want to explore."
-                    onChange={onChangeYears}
-                    >
-                        {renderYearsMenuItems()}
-                    </Select>
-                </FormControl>
-            </Grid>
-            <Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                    <InputLabel id="select-months">Select the month you want to explore.</InputLabel>
-                    <Select
-                    labelId="select-months"
-                    value={months}
-                    label="Select the month you want to explore."
-                    onChange={onChangeMonths}
-                    >
-                        {renderMonthsMenuItems()}
-                    </Select>
-                </FormControl>
-
-            </Grid>
+            
             <Grid item xs={6}>
                 <FormControl fullWidth>
                     <InputLabel id="select-week-from">Select the week you want to explore from.</InputLabel>
@@ -512,23 +482,7 @@ const Home:NextPage<Props> = (props) => {
 
             </Grid>
         </Grid>
-            // <Grid container>
-            //     <Grid item xs={12} md={6}>
-            //         <Box sx={{width:minWidth}}>
-            //             <Typography variant='body2' fontWeight={'bold'} margin={'.5em 0 0'}>From*</Typography>
-            //             {/* <Typography variant='caption' color='default' margin={'0'}>Select the start date</Typography> */}
-            //             <CalendarPicker disableHighlightToday date={dateFrom} onChange={(v) => setDateFrom(v)} />
-            //         </Box>
-            //     </Grid>
-            //     <Grid item xs={12} md={6}>
-            //         <Box sx={{width:minWidth}}>
-            //             <Typography variant='body2' fontWeight={'bold'} margin={'.5em 0 0'}>To*</Typography>
-            //             {/* <Typography variant='caption' color='default' margin={'0'}>Select the end date</Typography> */}
-            //             <CalendarPicker disableHighlightToday date={dateTo} onChange={(v) => setDateTo(v)} />
-            //         </Box>
-            //     </Grid>
-
-            // </Grid>
+            
         }
         else if(periodType=='monthly'){
             return <Grid container spacing={1}>

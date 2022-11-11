@@ -10,7 +10,7 @@ import { DistrictsMap } from '../constants'
 type Data = DataMonthly|DataWeekly|DataYearly
 const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:string,districtOut:string,algorithm:string,data:Data[])=>{
   const [dimension,setDimensions] = useState<Dimension>()
-  
+
   const [spec,setSpec] = useState<Record<string,any>>()
 
 
@@ -25,14 +25,20 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
   setDimensions(d)
   },[])
 
-  const canDraw = ()=>dimension && algorithm 
-    && ((district&&district.length) || (districtIn&&districtOut)) 
+  const canDraw = ()=>dimension && algorithm
+    && ((district&&district.length) || (districtIn&&districtOut))
     && data && data.length
 
   useEffect(()=>{
     if(canDraw()){
       const {width,height} = dimension
-
+const obj = [
+{id:1001,movement:	100097},
+{id:1003,movement:	50091},
+{id:1005,movement:	410134},
+{id:1007,movement:	1000121},
+{id:1009,movement:	100099},
+]
       if((districtOut&&districtIn)){
         let s = {
           width,
@@ -42,7 +48,7 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
           hconcat:[
             {
               width:width/3,
-              height,              
+              height,
               "data": {
               "url": `/static/data/maldiva.${DistrictsMap[districtOut]}.topojson.json`,
               "format": {
@@ -75,7 +81,7 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
             },
             {
               width:width/3,
-              height,  
+              height,
               "data": {
               "url": `/static/data/maldiva.${DistrictsMap[districtIn]}.topojson.json`,
               "format": {
@@ -109,10 +115,54 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
             ... genBarGraphSpec(districtIn,width/3,height)
             ]
           }
-          
-          setSpec(s);
 
-      } 
+          // setSpec(s);
+          setSpec({
+            "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+            "width": 500,
+            "height": 300,
+            "data": {
+              "url": "/static/data/us-10m.json",
+              "format": {
+                "type": "topojson",
+                "feature": "counties"
+              }
+            },
+            "transform": [
+              {
+                // filter:"(datum.id==1001)"
+
+                filter:"(datum.id==1001) || (datum.id==1003) || (datum.id==1005) || (datum.id==1007) || (datum.id==1009)"
+              },
+              
+              {
+                "lookup": "id",
+                "from": {
+                  // "data": {
+                  //   "url": "/static/data/unemployment.tsv"
+                  // },
+                  data:{
+                    values:obj
+                  },
+                  "key": "id",
+                  "fields": ["movement"]
+                }
+              },
+              
+            ],
+            "projection": {
+              "type": "albersUsa"
+            },
+            "mark": "geoshape",
+            "encoding": {
+              "color": {
+                "field": "movement",
+                "type": "quantitative"
+              }
+            }
+          })
+
+      }
       else{
         let s = {
           width,
@@ -159,11 +209,11 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
         }
       setSpec(s);
 
-      } 
+      }
 
-      
+
     }
-    
+
   },[dimension,district,algorithm,data])
 
   const genBarGraphSpec = (d:string,width,height)=>{
@@ -175,7 +225,7 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
       case 'subscribers':
           return genBarGraphSpecForSubscribers(d,width,height)
       case 'events':
-          return genBarGraphSpecForEvents(d,width,height)    
+          return genBarGraphSpecForEvents(d,width,height)
 
     }
   }
@@ -228,7 +278,7 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
           },
           encoding:{text:{field:'movement_mean',format:'s'}}
         }
-      
+
       ]
     }]
   }
@@ -281,7 +331,7 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
           },
           encoding:{text:{field:'density_mean',format:'s'}}
         }
-      
+
       ]
     }]
   }
@@ -334,7 +384,7 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
           },
           encoding:{text:{field:'subscribers_sum',format:'s'}}
         }
-      
+
       ]
     }]
   }
@@ -388,7 +438,7 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
             },
             encoding:{text:{field:'average_call_duration_sum',format:'s'}}
           }
-        
+
         ]
       },
       {
@@ -438,7 +488,7 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
             },
             encoding:{text:{field:'sms_in_sum',format:'s'}}
           }
-        
+
         ]
       },
       {
@@ -488,7 +538,7 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
             },
             encoding:{text:{field:'sms_out_sum',format:'s'}}
           }
-        
+
         ]
       }
     ]
@@ -521,15 +571,15 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
           const m ={
             x:(x1+x2)/2,
             y:(y1+y2)/2
-          } 
-          g.append('circle') 
+          }
+          g.append('circle')
             .attr('cx', m.x)
             .attr('cy', m.y+10)
             .attr('r', 5)
             .attr('stroke', 'gray')
             .attr('fill', '#1976d2');
             return {x:m.x,y:m.y+10};
-        }  
+        }
         return undefined;
       }
 
@@ -549,28 +599,25 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
 
       const pOut = drawCircle(psOut,out)
       const pIn = drawCircle(psIn,IN)
-      console.log('pOut',pOut)
-      console.log('pIn',pIn)
 
       if(pOut && pIn)
         drawLine(pOut,{x:pOut.x+(dimension.width/3)+dimension.margin,y:pOut.y})
-      
-        console.log('svg',out)
+
 
     })
-    
+
   }
-    
 
 
-  
+
+
   const Map:React.FC = ()=>{
       return <Box sx={{marginBottom:'4em'}}>
           <Box id='panel-info'/>
           {canDraw() ? <Box id={`map`}/> : <></>}
           <Box id="tooltip" className="tooltip" style={{position:'absolute'}}/>
       </Box>
-  }  
+  }
   return {Map}
 }
 export default useDrawMapAndGraphByDistrictVegaLite;
