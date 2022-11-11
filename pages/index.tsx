@@ -12,6 +12,7 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import csv from 'csvtojson'
 import path from 'node:path'
 import { NextPage } from 'next';
+import { DistrictsMap } from '@/src/constants';
 
 
 const algoritms = {
@@ -59,9 +60,7 @@ const Home:NextPage<Props> = (props) => {
 
   const [algorithm,setAlgoritm] = useState<string>('movement')
 
-  const districts = [
-    'Male','Maafushi','Naifaru','Baros','Fuvahmulah'
-]
+  const districts = Object.keys(DistrictsMap)
   const [district,setDistrict] = useState<string[]>([])
   const [districtIn,setDistrictIn] = useState<string>('')
   const [districtOut,setDistrictOut] = useState<string>('')
@@ -117,6 +116,7 @@ const Home:NextPage<Props> = (props) => {
   const onChangeDistrictOut = (e)=>{
     setDistrictOut(e.target.value)
     setDistrict([])
+    setDistrictIn('')
     setData([])    
   }
 
@@ -438,7 +438,7 @@ const Home:NextPage<Props> = (props) => {
                 renderValue={(selected) => (
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                         {selected.map((value) => (
-                        <Chip key={value} label={value} />
+                        <Chip key={value} label={DistrictsMap[value]} />
                         ))}
                     </Box>
                     )}

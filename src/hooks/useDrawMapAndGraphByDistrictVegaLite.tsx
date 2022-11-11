@@ -5,7 +5,7 @@ import * as d3 from 'd3'
 
 import { Box } from '@mui/system'
 import { DataMonthly, DataWeekly, DataYearly } from '../types/Data'
-import { Diversity3 } from '@mui/icons-material'
+import { DistrictsMap } from '../constants'
 
 type Data = DataMonthly|DataWeekly|DataYearly
 const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:string,districtOut:string,algorithm:string,data:Data[])=>{
@@ -44,7 +44,7 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
               width:width/3,
               height,              
               "data": {
-              "url": `/static/data/maldiva.${districtOut}.topojson.json`,
+              "url": `/static/data/maldiva.${DistrictsMap[districtOut]}.topojson.json`,
               "format": {
                 "type": "topojson",
                 "feature": "collection"
@@ -77,7 +77,7 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
               width:width/3,
               height,  
               "data": {
-              "url": `/static/data/maldiva.${districtIn}.topojson.json`,
+              "url": `/static/data/maldiva.${DistrictsMap[districtIn]}.topojson.json`,
               "format": {
                 "type": "topojson",
                 "feature": "collection"
@@ -189,10 +189,10 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
       },
       transform: [
         {
-          filter:`datum.district_out == '${d}' `
+          filter:`datum.district_out_encoded == '${d}' `
         },
         {
-          filter:`datum.district_in != '${d}' `
+          filter:`datum.district_in_encoded != '${d}' `
         },
         {
           aggregate:[{
@@ -200,11 +200,11 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
             field:'movement',
             as:'movement_mean'
           }],
-          groupby:['district_out','district_in']
+          groupby:['district_out_encoded','district_in_encoded']
         }
       ],
       encoding: {
-        "x": {"field": "district_in", "type": "nominal",title:'District In',axis:{labelAngle:0}},
+        "x": {"field": "district_in_encoded", "type": "nominal",title:'District In',axis:{labelAngle:0}},
         "y": {"field": "movement_mean", type:'quantitative',title:'Movement (MEAN)'},
       },
       layer:[
@@ -215,7 +215,7 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
             tooltip:true
           },
           encoding:{
-            color: {"field": "district_in", "type": "nominal",title:'District In'}
+            color: {"field": "district_in_encoded", "type": "nominal",title:'District In'}
           },
         },
         {
@@ -242,10 +242,10 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
       },
       transform: [
         {
-          filter:`datum.district_out == '${d}' `
+          filter:`datum.district_out_encoded == '${d}' `
         },
         {
-          filter:`datum.district_in != '${d}' `
+          filter:`datum.district_in_encoded != '${d}' `
         },
         {
           aggregate:[{
@@ -253,11 +253,11 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
             field:'density',
             as:'density_mean'
           }],
-          groupby:['district_out','district_in']
+          groupby:['district_out_encoded','district_in_encoded']
         }
       ],
       encoding: {
-        "x": {"field": "district_in", "type": "nominal",title:'District In',axis:{labelAngle:0}},
+        "x": {"field": "district_in_encoded", "type": "nominal",title:'District In',axis:{labelAngle:0}},
         "y": {"field": "density_mean", type:'quantitative',title:'Density (MEAN)'},
       },
       layer:[
@@ -268,7 +268,7 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
             tooltip:true
           },
           encoding:{
-            color: {"field": "district_in", "type": "nominal",title:'District In'}
+            color: {"field": "district_in_encoded", "type": "nominal",title:'District In'}
           },
         },
         {
@@ -295,10 +295,10 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
       },
       transform: [
         {
-          filter:`datum.district_out == '${d}' `
+          filter:`datum.district_out_encoded == '${d}' `
         },
         {
-          filter:`datum.district_in != '${d}' `
+          filter:`datum.district_in_encoded != '${d}' `
         },
         {
           aggregate:[{
@@ -306,11 +306,11 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
             field:'subscribers',
             as:'subscribers_sum'
           }],
-          groupby:['district_out','district_in']
+          groupby:['district_out_encoded','district_in_encoded']
         }
       ],
       encoding: {
-        "x": {"field": "district_in", "type": "nominal",title:'District In',axis:{labelAngle:0}},
+        "x": {"field": "district_in_encoded", "type": "nominal",title:'District In',axis:{labelAngle:0}},
         "y": {"field": "subscribers_sum", type:'quantitative',title:'Subscribers (MEAN)'},
       },
       layer:[
@@ -321,7 +321,7 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
             tooltip:true
           },
           encoding:{
-            color: {"field": "district_in", "type": "nominal",title:'District In'}
+            color: {"field": "district_in_encoded", "type": "nominal",title:'District In'}
           },
         },
         {
@@ -349,10 +349,10 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
         },
         transform: [
           {
-            filter:`datum.district_out == '${d}' `
+            filter:`datum.district_out_encoded == '${d}' `
           },
           {
-            filter:`datum.district_in != '${d}' `
+            filter:`datum.district_in_encoded != '${d}' `
           },
           {
             aggregate:[{
@@ -360,11 +360,11 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
               field:'average_call_duration',
               as:'average_call_duration_sum'
             }],
-            groupby:['district_out','district_in']
+            groupby:['district_out_encoded','district_in_encoded']
           }
         ],
         encoding: {
-          "x": {"field": "district_in", "type": "nominal",title:'District In',axis:{labelAngle:0}},
+          "x": {"field": "district_in_encoded", "type": "nominal",title:'District In',axis:{labelAngle:0}},
           "y": {"field": "average_call_duration_sum", type:'quantitative',title:'Average call duration (SUM)'},
         },
         layer:[
@@ -375,7 +375,7 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
               tooltip:true
             },
             encoding:{
-              color: {"field": "district_in", "type": "nominal",title:'District In'}
+              color: {"field": "district_in_encoded", "type": "nominal",title:'District In'}
             },
           },
           {
@@ -399,10 +399,10 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
         },
         transform: [
           {
-            filter:`datum.district_out == '${d}' `
+            filter:`datum.district_out_encoded == '${d}' `
           },
           {
-            filter:`datum.district_in != '${d}' `
+            filter:`datum.district_in_encoded != '${d}' `
           },
           {
             aggregate:[{
@@ -410,11 +410,11 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
               field:'sms_out',
               as:'sms_in_sum'
             }],
-            groupby:['district_out','district_in']
+            groupby:['district_out_encoded','district_in_encoded']
           }
         ],
         encoding: {
-          "x": {"field": "district_in", "type": "nominal",title:'District In',axis:{labelAngle:0}},
+          "x": {"field": "district_in_encoded", "type": "nominal",title:'District In',axis:{labelAngle:0}},
           "y": {"field": "sms_in_sum", type:'quantitative',title:'SMS in (SUM)'},
         },
         layer:[
@@ -425,7 +425,7 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
               tooltip:true
             },
             encoding:{
-              color: {"field": "district_in", "type": "nominal",title:'District In'}
+              color: {"field": "district_in_encoded", "type": "nominal",title:'District In'}
             },
           },
           {
@@ -449,10 +449,10 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
         },
         transform: [
           {
-            filter:`datum.district_out == '${d}' `
+            filter:`datum.district_out_encoded == '${d}' `
           },
           {
-            filter:`datum.district_in != '${d}' `
+            filter:`datum.district_in_encoded != '${d}' `
           },
           {
             aggregate:[{
@@ -460,11 +460,11 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
               field:'sms_out',
               as:'sms_out_sum'
             }],
-            groupby:['district_out','district_in']
+            groupby:['district_out_encoded','district_in_encoded']
           }
         ],
         encoding: {
-          "x": {"field": "district_in", "type": "nominal",title:'District In',axis:{labelAngle:0}},
+          "x": {"field": "district_in_encoded", "type": "nominal",title:'District In',axis:{labelAngle:0}},
           "y": {"field": "sms_out_sum", type:'quantitative',title:'SMS out (SUM)'},
         },
         layer:[
@@ -475,7 +475,7 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
               tooltip:true
             },
             encoding:{
-              color: {"field": "district_in", "type": "nominal",title:'District In'}
+              color: {"field": "district_in_encoded", "type": "nominal",title:'District In'}
             },
           },
           {
