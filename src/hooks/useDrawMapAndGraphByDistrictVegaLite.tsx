@@ -29,186 +29,344 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
     && ((district&&district.length) || (districtIn&&districtOut))
     && data && data.length
 
+    // let obj = [
+    //   {data:2020,district_in:53,district_out:15,	district_in_encoded:"Stonewall",district_out_encoded:"Stonewall",density:15,movement:5,subscribers:13},
+    //   {data:2020,district_in:26,district_out:53,	district_in_encoded:"Stonewall",district_out_encoded:"Stonewall",density:15,movement:5,subscribers:3},
+    //   {data:2020,district_in:48,district_out:26,	district_in_encoded:"Stonewall",district_out_encoded:"Stonewall",density:15,movement:5,subscribers:3},
+    //   {data:2020,district_in:53,district_out:48,	district_in_encoded:"Stonewall",district_out_encoded:"Stonewall",density:15,movement:5,subscribers:2},
+    // ]
+    
   useEffect(()=>{
     if(canDraw()){
       const {width,height} = dimension
-const obj = [
-{id:1001,movement:	100097},
-{id:1003,movement:	50091},
-{id:1005,movement:	410134},
-{id:1007,movement:	1000121},
-{id:1009,movement:	100099},
-]
-      if((districtOut&&districtIn)){
-        let s = {
-          width,
-          height,
-          $schema:'https://vega.github.io/schema/vega-lite/v5.json',
-          columns:3,
-          hconcat:[
-            {
-              width:width/3,
-              height,
-              "data": {
-              "url": `/static/data/maldiva.${DistrictsMap[districtOut]}.topojson.json`,
-              "format": {
-                "type": "topojson",
-                "feature": "collection"
-              }
-              },
-              "projection": {
-                "type": "mercator",
-              },
-              layer:[
-                {
-                  name:'districtOut',
-                  "mark": {
-                    "type": "geoshape",
-                    "fill": "lightgray",
-                    "stroke": "white",
-                    tooltip:districtOut
-                  }
-                },
-                {
-                  mark:{
-                    type:'text',
-                    text:`From ${districtOut}`,
-                    fontWeight:'bold',
-                    color:'black'
-                  }
-                }
-              ]
-            },
-            {
-              width:width/3,
-              height,
-              "data": {
-              "url": `/static/data/maldiva.${DistrictsMap[districtIn]}.topojson.json`,
-              "format": {
-                "type": "topojson",
-                "feature": "collection"
-              }
-              },
-              "projection": {
-                "type": "mercator",
-              },
-              layer:[
-                {
-                  name:'districtIn',
-                  "mark": {
-                    "type": "geoshape",
-                    "fill": "lightgray",
-                    "stroke": "white",
-                    tooltip:districtIn
-                  }
-                },
-                {
-                  mark:{
-                    type:'text',
-                    text:`To ${districtIn}`,
-                    fontWeight:'bold',
-                    color:'black'
-                  }
-                }
-              ]
-            },
-            ... genBarGraphSpec(districtIn,width/3,height)
-            ]
-          }
+      let districts = district && district.length ? district : [districtOut,districtIn];
+      let aggregate = 'sum'
+      const fromToDistricts = ['movement','call_out','sms_out'].includes(algorithm)
+      if(fromToDistricts){
+        aggregate='mean'
+      }
 
-          // setSpec(s);
-          setSpec({
-            "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-            "width": 500,
-            "height": 300,
-            "data": {
-              "url": "/static/data/us-10m.json",
-              "format": {
-                "type": "topojson",
-                "feature": "states"
-              }
+      setSpec({
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        width,
+        height,
+        layer:[
+          //district_out map
+          {
+            data:{
+              values:data
             },
             "transform": [
               {
-                // filter:"(datum.id==1001)"
-                filter:"(datum.id==15) || (datum.id==26) || (datum.id==48) || (datum.id==53) || (datum.id==54)"
+                aggregate:[{
+                  op:aggregate,
+                  field:algorithm,
+                  as:`${algorithm}`
+                }],
+                groupby:['district_out','district_in','district_out_encoded']
               },
-              
               {
-                "lookup": "id",
+                "lookup": "district_out",
                 "from": {
                   "data": {
-                    "url": "/static/data/us-states.json"
+                    "url": "/static/data/us-10m.json",
+                    "format": {
+                      "type": "topojson",
+                      "feature": "states",
+                    },
                   },
-                  // data:{
-                  //   values:obj
-                  // },
-                  "key": "id",
-                  "fields": ["movement"]
-                }
+                  "key": "id"
+                },
+                "as": "geo"
               },
-              
             ],
-            "projection": {
-              "type": "albersUsa"
+            "projection": {"type": "albersUsa"},
+            "mark": {
+              type:"geoshape",
             },
-            "mark": "geoshape",
             "encoding": {
+              "shape": {
+                "field": "geo",
+                "type": "geojson",
+              },
               "color": {
-                "field": "movement",
+                "field": `${algorithm}`,
                 "type": "quantitative"
+              },
+              tooltip:[
+                {field:'district_out_encoded',title:'District'},
+                ... !fromToDistricts ? [
+                  {field:algorithm,title:`${algorithm}`.toUpperCase()}
+                ]:[]
+              ]
+            }
+          },
+          //district_in map
+          ... fromToDistricts ? [
+            {
+              data:{
+                values:data
+              },
+              "transform": [
+                {
+                  aggregate:[{
+                    op:aggregate,
+                    field:algorithm,
+                    as:`${algorithm}`
+                  }],
+                  groupby:['district_out','district_in','district_in_encoded']
+                },
+                {
+                  "lookup": "district_in",
+                  "from": {
+                    "data": {
+                      "url": "/static/data/us-10m.json",
+                      "format": {
+                        "type": "topojson",
+                        "feature": "states",
+                      },
+                    },
+                    "key": "id"
+                  },
+                  "as": "geo"
+                },
+              ],
+              "projection": {"type": "albersUsa"},
+              "mark": "geoshape",
+              "encoding": {
+                "shape": {
+                  "field": "geo",
+                  "type": "geojson",
+                },
+                "color": {
+                  "field": `${algorithm}`,
+                  "type": "quantitative",
+                },
+                tooltip:{field:'district_in_encoded'}
+              }
+  
+            }
+          ]:[],
+          //for fromToDistricts
+          ... fromToDistricts ? [
+          //for circles
+            {
+              "data": {
+                "url": "/static/data/us-states.json"
+              },
+              // transform:[
+              //   {
+              //     filter:{
+              //       field:'id',
+              //       oneOf:districts
+              //     }
+              //   }
+              // ],
+              "projection": {
+                "type": "albersUsa"
+              },
+              "mark": {
+                type:"circle",
+                tooltip:{content:'encoding'}
+              },
+              "encoding": {
+                "longitude": {
+                  "field": "longitude",
+                  "type": "quantitative"
+                },
+                "latitude": {
+                  "field": "latitude",
+                  "type": "quantitative"
+                },
+                "size": {"value": 100},
+                "color": {"value": "orange"},
+                'stroke':{value:'navy'}
+              }
+            }, 
+          // for lines  
+            {
+              "data": {
+                values:data
+              },
+              "transform": [
+                {
+                  "lookup": "district_out",
+                  "from": {
+                    "data": {
+                      "url": "/static/data/us-states.json"
+                    },
+                    "key": "id",
+                    "fields": ["latitude", "longitude"]
+                  },
+                  "as": ["origin_latitude", "origin_longitude"]
+                },
+                {
+                  "lookup": "district_in",
+                  "from": {
+                    "data": {
+                      "url": "/static/data/us-states.json"
+                    },
+                    "key": "id",
+                    "fields": ["latitude", "longitude"]
+                  },
+                  "as": ["dest_latitude", "dest_longitude"]
+                }
+              ],
+              "projection": {
+                "type": "albersUsa",
+              },
+              "mark": {
+                type:"rule",
+                stroke:'orange',
+                strokeWidth:2,
+                tooltip:{content:'data'}
+              },
+              "encoding": {
+                "longitude": {"field": "origin_longitude"},
+                "latitude": {"field": "origin_latitude"},
+                "longitude2": {"field": "dest_longitude"},
+                "latitude2": {"field": "dest_latitude"},
+                tooltip:[
+                  {field:'district_out_encoded',title:'From'},
+                  {field:'district_in_encoded',title:'To'},
+                  {field:algorithm,title:`${algorithm}`.toUpperCase()},
+                ],
+                
               }
             }
-          })
+          ]:[]
+        ]
+      })
 
-      }
-      else{
-        let s = {
-          width,
-          height,
-          $schema:'https://vega.github.io/schema/vega-lite/v5.json',
-          columns:2,
-          hconcat:district.map(d=>({
-              width,
-              height,
-              hconcat:[
-                {
-                  "data": {
-                  "url": `/static/data/maldiva.${d}.topojson.json`,
-                  "format": {
-                    "type": "topojson",
-                    "feature": "collection"
-                  }
-                  },
-                  "projection": {
-                    "type": "mercator",
-                  },
-                  layer:[
-                    {
-                      "mark": {
-                        "type": "geoshape",
-                        "fill": "lightgray",
-                        "stroke": "white",
-                        tooltip:d
-                      }
-                    },
-                    {
-                      mark:{
-                        type:'text',
-                        text:d,
-                        fontWeight:'bold',
-                        color:'black'
-                      }
-                    }
-                  ]
-                },
-                ... genBarGraphSpec(d,width/3,height)
-              ]
-          }))
-        }
-      setSpec(s);
 
-      }
+      // if((districtOut&&districtIn)){
+      //   let s = {
+      //     width,
+      //     height,
+      //     $schema:'https://vega.github.io/schema/vega-lite/v5.json',
+      //     columns:3,
+      //     hconcat:[
+      //       {
+      //         width:width/3,
+      //         height,
+      //         "data": {
+      //         "url": `/static/data/maldiva.${DistrictsMap[districtOut]}.topojson.json`,
+      //         "format": {
+      //           "type": "topojson",
+      //           "feature": "collection"
+      //         }
+      //         },
+      //         "projection": {
+      //           "type": "mercator",
+      //         },
+      //         layer:[
+      //           {
+      //             name:'districtOut',
+      //             "mark": {
+      //               "type": "geoshape",
+      //               "fill": "lightgray",
+      //               "stroke": "white",
+      //               tooltip:districtOut
+      //             }
+      //           },
+      //           {
+      //             mark:{
+      //               type:'text',
+      //               text:`From ${districtOut}`,
+      //               fontWeight:'bold',
+      //               color:'black'
+      //             }
+      //           }
+      //         ]
+      //       },
+      //       {
+      //         width:width/3,
+      //         height,
+      //         "data": {
+      //         "url": `/static/data/maldiva.${DistrictsMap[districtIn]}.topojson.json`,
+      //         "format": {
+      //           "type": "topojson",
+      //           "feature": "collection"
+      //         }
+      //         },
+      //         "projection": {
+      //           "type": "mercator",
+      //         },
+      //         layer:[
+      //           {
+      //             name:'districtIn',
+      //             "mark": {
+      //               "type": "geoshape",
+      //               "fill": "lightgray",
+      //               "stroke": "white",
+      //               tooltip:districtIn
+      //             }
+      //           },
+      //           {
+      //             mark:{
+      //               type:'text',
+      //               text:`To ${districtIn}`,
+      //               fontWeight:'bold',
+      //               color:'black'
+      //             }
+      //           }
+      //         ]
+      //       },
+      //       ... genBarGraphSpec(districtIn,width/3,height)
+      //       ]
+      //     }
+
+      //     setSpec(s);
+          
+
+      // }
+      // else{
+      //   let s = {
+      //     width,
+      //     height,
+      //     $schema:'https://vega.github.io/schema/vega-lite/v5.json',
+      //     columns:2,
+      //     hconcat:district.map(d=>({
+      //         width,
+      //         height,
+      //         hconcat:[
+      //           {
+      //             "data": {
+      //             "url": `/static/data/maldiva.${d}.topojson.json`,
+      //             "format": {
+      //               "type": "topojson",
+      //               "feature": "collection"
+      //             }
+      //             },
+      //             "projection": {
+      //               "type": "mercator",
+      //             },
+      //             layer:[
+      //               {
+      //                 "mark": {
+      //                   "type": "geoshape",
+      //                   "fill": "lightgray",
+      //                   "stroke": "white",
+      //                   tooltip:d
+      //                 }
+      //               },
+      //               {
+      //                 mark:{
+      //                   type:'text',
+      //                   text:d,
+      //                   fontWeight:'bold',
+      //                   color:'black'
+      //                 }
+      //               }
+      //             ]
+      //           },
+      //           ... genBarGraphSpec(d,width/3,height)
+      //         ]
+      //     }))
+      //   }
+      // setSpec(s);
+
+      // }
 
 
     }

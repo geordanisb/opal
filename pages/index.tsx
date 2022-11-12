@@ -16,10 +16,12 @@ import { DistrictsMap } from '@/src/constants';
 
 
 const algoritms = {
-    movement:{name:'Mobility (Travels)',description:"Density: Number of users who spent most of their time in a certain area in a given time interval. "},
-    density:{name:'Density',description:"Density: Number of users who spent most of their time in a certain area in a given time interval. "},
-    subscribers:{name:'Subscribers',description:"Density: Number of users who spent most of their time in a certain area in a given time interval. "},
-    events:{name:'Events',description:"Density: Number of users who spent most of their time in a certain area in a given time interval. "},
+    movement:{name:'Mobility (Travels)',description:"Average number of antennas visited by subscribers for a specific timeframe, starting from district_one to district_two (the maximum number of cell towers the user could visit is 500)."},
+    density:{name:'Density',description:"The number of home-located subscribers (who pin the same antenna for a determined period of time during a day) divided by the km’2 for a given area within a specific timeframe."},
+    subscribers:{name:'Subscribers',description:"The active number of SIM cards registered with the mobile network operator (MNO) in a specific district within a period of time."},
+    call_out:{name:'Events calls',description:"The total number of calls sent by subscribers located in district_one to subscribers located in district_two (district one and two could be the same)"},
+    sms_out:{name:'Events SMSs',description:"The total number of SMSs sent by subscribers located in district_one to subscribers located in district_two (district one and two could be the same)"},
+
   }
 const locations = {
 1:'District',
@@ -85,25 +87,39 @@ const Home:NextPage<Props> = (props) => {
   const onChangeAlgoritm = (e)=>{
     const v = e.target.value
     setAlgoritm(v)
-    setDistrict(()=>[])
-    setDistrictIn('')
-    setDistrictOut('')
-    setData(()=>[])    
+
+    setLocation(1)
+    setDistrict([])
+    setPeriodType('weekly')
+    setYears('')
+    setMonths('')
+    setWeekFrom('')
+    setWeekTo('')
+    setData([])  
+
   }
 
   const onChangeLocation = (e)=>{
     const val = e.target.value;
     setLocation(val)
-    if(val==1)
+    if(val==1){
+        setDistrictOut('')
+        setDistrictIn('')
         setDistrict(()=>[])
-    else if(val==2)
+    }
+    else if(val==2){
+        setDistrictOut('')
+        setDistrictIn('')   
         setDistrict(()=>[...districts])
+    }
     setData(()=>[])    
 
   }
 
   const onChangeDistrict = (e)=>{
     setDistrict(e.target.value)
+    setDistrictIn('')
+    setDistrictOut('')
     setData(()=>[])    
   }
 
@@ -250,6 +266,13 @@ const Home:NextPage<Props> = (props) => {
             return years == i.date
         })
     }
+    debugger;
+    if(districtOut && districtIn)
+        d = d.filter(i=>(i.district_out == districtOut && i.district_in == districtIn))
+      
+    else if(district && district.length)    
+        d = d.filter(i=>district.includes(i.district_out))
+        
     
     setData(d)
     setLoading(false)
@@ -283,6 +306,13 @@ const Home:NextPage<Props> = (props) => {
         return Object.entries(algoritms).map(([k,v])=>{
             return <MenuItem key={k} value={k}>{v.name}</MenuItem>
         })
+    }
+
+    const renderEventsAlgoritmMenuItems = ()=>{
+        return [
+            <MenuItem key={'call_out'} value={'call_out'}>Call</MenuItem>,
+            <MenuItem key={'sms_out'} value={'sms_out'}>SMS</MenuItem>
+        ]
     }
 
     const renderYearsMenuItems = ()=>{
@@ -357,10 +387,18 @@ const Home:NextPage<Props> = (props) => {
                     {years}
                 </Typography>
         }
+        const renderDistricts = ()=>{
+            if(location==2)return <></>
+            if(districtIn && districtOut)
+                return <>
+                    (<Typography display={'inline'} fontWeight={'bold'}>{`${DistrictsMap[districtOut].label} -> ${DistrictsMap[districtIn].label}`}</Typography>)
+                </>
+        }
         return <Breadcrumbs aria-label="breadcrumb" separator={<NavigateNext/>}>
             <Typography fontWeight={'bold'}>Dataland</Typography>
             {algoritms[algorithm]?<Typography fontWeight={'bold'}>{algoritms[algorithm].name}</Typography>:undefined}
-            {locations[location]?<Typography fontWeight={'bold'}>{locations[location]}</Typography>:undefined}
+            {locations[location]?<Typography fontWeight={'bold'}>{locations[location]} {renderDistricts()}</Typography>:undefined}
+            
             {renderDateBreadcrumb()}
         </Breadcrumbs>
     }
@@ -381,12 +419,12 @@ const Home:NextPage<Props> = (props) => {
             onChange={onChangeDistrictIn}
             renderValue={(selected) => (
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    <Chip label={selected} />
+                    <Chip label={DistrictsMap[selected].label} />
                 </Box>
                 )}
             >
                 {districts.filter(i=>i!=districtOut).map(d=><MenuItem key={d} value={d}>
-                    {d}
+                    {DistrictsMap[d].label}
                 </MenuItem>)}
             </Select>
         </FormControl>
@@ -403,12 +441,12 @@ const Home:NextPage<Props> = (props) => {
             onChange={onChangeDistrictOut}
             renderValue={(selected) => (
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    <Chip label={selected} />
+                    <Chip label={DistrictsMap[selected].label} />
                 </Box>
                 )}
             >
                 {districts.map(d=><MenuItem key={d} value={d}>
-                    {d}
+                    {DistrictsMap[d].label}
                 </MenuItem>)}
             </Select>
         </FormControl>
@@ -434,13 +472,13 @@ const Home:NextPage<Props> = (props) => {
                 renderValue={(selected) => (
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                         {selected.map((value) => (
-                        <Chip key={value} label={DistrictsMap[value]} />
+                        <Chip key={value} label={DistrictsMap[value].label} />
                         ))}
                     </Box>
                     )}
                 >
                 {districts.map(d=><MenuItem key={d} value={d}>
-                    {d}
+                    {DistrictsMap[d].label}
                 </MenuItem>)}
                 </Select>
             </FormControl>
@@ -543,7 +581,6 @@ const Home:NextPage<Props> = (props) => {
     const onChangePeriodType = (e)=>{
         setPeriodType(e.target.value)
         setData(()=>props.data[e.target.value])
-        console.log(e.target.value,props.data[e.target.value])
     }
 
     return <Box>
@@ -576,10 +613,9 @@ const Home:NextPage<Props> = (props) => {
                         <Box marginTop={'.5em'}>
                             <Typography variant='body2' fontWeight={'bold'} marginBottom='1em'>Topic*</Typography>
                             <FormControl fullWidth>
-                                <InputLabel id="select-mark">Select the algorithm you want to explore.</InputLabel>
+                                <InputLabel id="select-algorithm">Select the algorithm you want to explore.</InputLabel>
                                 <Select
                                 labelId="select-algorithm"
-                                id="demo-simple-select"
                                 value={algorithm}
                                 label="Select the algorithm you want to explore."
                                 onChange={onChangeAlgoritm}
@@ -587,6 +623,22 @@ const Home:NextPage<Props> = (props) => {
                                     {renderAlgoritmMenuItems()}
                                 </Select>
                             </FormControl>
+                            {/* {algorithm=='events' ? <>
+                                <Typography variant='body2' fontWeight={'bold'} marginBottom='1em'>Specific Event Topic*</Typography>
+                                <FormControl fullWidth>
+                                    <InputLabel id="select-algorithm-events">Select the specific event you want to explore.</InputLabel>
+                                    <Select
+                                    labelId="select-algorithm-events"
+                                    value={algorithm}
+                                    label="Select the algorithm you want to explore."
+                                    onChange={onChangeAlgoritm}
+                                    >
+                                        {renderEventsAlgoritmMenuItems()}
+                                    </Select>
+                                </FormControl>
+                            </>
+                            : <></>
+                            } */}
                         </Box>
                         <Box marginTop={'.5em'}>
                             <Typography variant='body2' fontWeight={'bold'} marginBottom='1em'>Location*</Typography>
@@ -594,7 +646,6 @@ const Home:NextPage<Props> = (props) => {
                                 <InputLabel id="select-mark">Select the geographical granularity.</InputLabel>
                                 <Select
                                 labelId="select-mark"
-                                id="demo-simple-select"
                                 value={location}
                                 label="Select the algorithm you want to explore."
                                 onChange={onChangeLocation}
