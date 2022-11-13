@@ -154,14 +154,14 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
               "data": {
                 "url": "/static/data/us-states.json"
               },
-              // transform:[
-              //   {
-              //     filter:{
-              //       field:'id',
-              //       oneOf:districts
-              //     }
-              //   }
-              // ],
+              transform:[
+                {
+                  filter:{
+                    field:'id',
+                    oneOf:districts
+                  }
+                }
+              ],
               "projection": {
                 "type": "albersUsa"
               },

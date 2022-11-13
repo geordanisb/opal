@@ -254,7 +254,6 @@ const Home:NextPage<Props> = (props) => {
             const q2 = dt.isBetween(date_from,date_to,undefined,'[]')
             return q1 && q2
         })
-        console.log('d',d)
     }
     else if(periodType == 'monthly' && months){
         d = props.data.monthly.filter(i=>{
@@ -266,15 +265,14 @@ const Home:NextPage<Props> = (props) => {
             return years == i.date
         })
     }
-    debugger;
     if(districtOut && districtIn)
         d = d.filter(i=>(i.district_out == districtOut && i.district_in == districtIn))
       
     else if(district && district.length)    
         d = d.filter(i=>district.includes(i.district_out))
-        
     
     setData(d)
+    console.log('d',d)
     setLoading(false)
     d.length ? setDrawerShow(false):setDrawerShow(true)
     
@@ -747,14 +745,15 @@ const Home:NextPage<Props> = (props) => {
 }
 export const getServerSideProps = async ()=>{
     const mp = path.join(process.cwd(),'public','static','data','opal_synthetic','monthly.csv')
-    let monthly = await csv().fromFile(mp) 
-
     const wp = path.join(process.cwd(),'public','static','data','opal_synthetic','weekly.csv')
-    let weekly = await csv().fromFile(wp) 
-
     const yp = path.join(process.cwd(),'public','static','data','opal_synthetic','yearly.csv')
-    let yearly = await csv().fromFile(yp) 
-
+    
+    const [monthly,weekly,yearly] = await Promise.all([
+        csv().fromFile(mp),
+        csv().fromFile(wp),
+        csv().fromFile(yp)  
+    ])
+    
     return {
         props:{
             data:{
