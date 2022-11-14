@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react'
 import { Dimension } from '../types/dimension'
 import embed from 'vega-embed'
-import * as d3 from 'd3'
+// import * as d3 from 'd3'
 
 import { Box } from '@mui/system'
 import { DataMonthly, DataWeekly, DataYearly } from '../types/Data'
-import { DistrictsMap } from '../constants'
+// import { DistrictsMap } from '../constants'
 
 type Data = DataMonthly|DataWeekly|DataYearly
-const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:string,districtOut:string,algorithm:string,data:Data[])=>{
+const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:string,districtOut:string,algorithm:string,data:Data[],doRender=false)=>{
   const [dimension,setDimensions] = useState<Dimension>()
 
   const [spec,setSpec] = useState<Record<string,any>>()
@@ -25,7 +25,7 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
   setDimensions(d)
   },[])
 
-  const canDraw = ()=>dimension && algorithm
+  const canDraw = ()=>doRender && dimension && algorithm
     && ((district&&district.length) || (districtIn&&districtOut))
     && data && data.length
 
@@ -38,6 +38,8 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
     
   useEffect(()=>{
     if(canDraw()){
+      
+
       const {width,height} = dimension
       let districts = district && district.length ? district : [districtOut,districtIn];
       let aggregate = 'sum'
@@ -45,7 +47,22 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
       if(fromToDistricts){
         aggregate='mean'
       }
-
+      const info = data.reduce((p,c)=>{
+        if(c.district_out == c.district_in)return p;
+        const k = fromToDistricts ? `${c.district_out_encoded}-${c.district_in_encoded}` : `${c.district_out_encoded}`
+        if(!(k in p)){
+            p[k] = {sum:+c[algorithm],count:1,mean:+c[algorithm]/1}
+        }
+        else{
+          p[k].sum += +c[algorithm];
+          p[k].count += 1;
+          p[k].mean = p[k].sum/p[k].count
+        }
+        return p;
+      },{})
+      console.log('data',data)
+      console.log('info',info)
+      
       setSpec({
         "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
         width,
@@ -61,9 +78,9 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
                 aggregate:[{
                   op:aggregate,
                   field:algorithm,
-                  as:`${algorithm}`
+                  as:`${algorithm}` 
                 }],
-                groupby:['district_out','district_in','district_out_encoded']
+                groupby:['district_out','district_out_encoded']
               },
               {
                 "lookup": "district_out",
@@ -94,7 +111,10 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
                 "type": "quantitative"
               },
               tooltip:[
-                {field:'district_out_encoded',title:'District'},
+                {
+                  field:'district_out_encoded',
+                  title:'District'
+                },
                 ... !fromToDistricts ? [
                   {field:algorithm,title:`${algorithm}`.toUpperCase()}
                 ]:[]
@@ -107,14 +127,14 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
               data:{
                 values:data
               },
-              "transform": [
+              transform: [
                 {
                   aggregate:[{
                     op:aggregate,
                     field:algorithm,
                     as:`${algorithm}`
                   }],
-                  groupby:['district_out','district_in','district_in_encoded']
+                  groupby:['district_in','district_in_encoded']
                 },
                 {
                   "lookup": "district_in",
@@ -189,6 +209,11 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
                 values:data
               },
               "transform": [
+                ... (fromToDistricts && districtOut && districtIn) ? [
+                  {
+                    filter:`datum.district_out == ${districtOut} && datum.district_in == ${districtIn}`
+                  }
+                ]:[],
                 {
                   "lookup": "district_out",
                   "from": {
@@ -371,7 +396,7 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
 
     }
 
-  },[dimension,district,algorithm,data])
+  },[doRender,dimension,district,algorithm,data])
 
   const genBarGraphSpec = (d:string,width,height)=>{
     switch(algorithm){
@@ -707,58 +732,58 @@ const useDrawMapAndGraphByDistrictVegaLite = (district:string[],districtIn:strin
     const p = new Promise((resolve,reject)=>{
       resolve(embed('#map',spec,{renderer:'svg'}))
     }).then(r=>{
-      if(!(districtIn&&districtOut))return;
-      const out = d3.select(".districtOut_marks")
-      const outPath = out.select("path")
-      let psOut = {bounds:undefined}
-      outPath.each(p=>{
-        psOut.bounds = p.bounds
-      })
+      // if(!(districtIn&&districtOut))return;
+      // const out = d3.select(".districtOut_marks")
+      // const outPath = out.select("path")
+      // let psOut = {bounds:undefined}
+      // outPath.each(p=>{
+      //   psOut.bounds = p.bounds
+      // })
 
-      const IN = d3.select(".districtIn_marks")
-      const inPath = IN.select("path")
-      let psIn = {bounds:undefined}
-      inPath.each(p=>{
-        psIn.bounds = p.bounds
-      })
+      // const IN = d3.select(".districtIn_marks")
+      // const inPath = IN.select("path")
+      // let psIn = {bounds:undefined}
+      // inPath.each(p=>{
+      //   psIn.bounds = p.bounds
+      // })
 
-      const drawCircle = (ps,g)=>{
-        if(ps.bounds){
-          const {x2,x1,y2,y1} = ps.bounds;
-          const m ={
-            x:(x1+x2)/2,
-            y:(y1+y2)/2
-          }
-          g.append('circle')
-            .attr('cx', m.x)
-            .attr('cy', m.y+10)
-            .attr('r', 5)
-            .attr('stroke', 'gray')
-            .attr('fill', '#1976d2');
-            return {x:m.x,y:m.y+10};
-        }
-        return undefined;
-      }
+      // const drawCircle = (ps,g)=>{
+      //   if(ps.bounds){
+      //     const {x2,x1,y2,y1} = ps.bounds;
+      //     const m ={
+      //       x:(x1+x2)/2,
+      //       y:(y1+y2)/2
+      //     }
+      //     g.append('circle')
+      //       .attr('cx', m.x)
+      //       .attr('cy', m.y+10)
+      //       .attr('r', 5)
+      //       .attr('stroke', 'gray')
+      //       .attr('fill', '#1976d2');
+      //       return {x:m.x,y:m.y+10};
+      //   }
+      //   return undefined;
+      // }
 
-      const drawLine = (m1,m2)=>{
-        const points = [{x:m1.x,y:m1.y},{x:m2.x,y:m2.y}]
-        const lineFunc = d3.line()
-          .x(function(d) { return d.x })
-          .y(function(d) { return d.y })
+      // const drawLine = (m1,m2)=>{
+      //   const points = [{x:m1.x,y:m1.y},{x:m2.x,y:m2.y}]
+      //   const lineFunc = d3.line()
+      //     .x(function(d) { return d.x })
+      //     .y(function(d) { return d.y })
 
-        const g = d3.select('svg > g')
-        g.append('path')
-        .attr('d', lineFunc(points))
-        .attr('stroke', '#1976d2')
-        .attr('fill', 'none');
+      //   const g = d3.select('svg > g')
+      //   g.append('path')
+      //   .attr('d', lineFunc(points))
+      //   .attr('stroke', '#1976d2')
+      //   .attr('fill', 'none');
 
-      }
+      // }
 
-      const pOut = drawCircle(psOut,out)
-      const pIn = drawCircle(psIn,IN)
+      // const pOut = drawCircle(psOut,out)
+      // const pIn = drawCircle(psIn,IN)
 
-      if(pOut && pIn)
-        drawLine(pOut,{x:pOut.x+(dimension.width/3)+dimension.margin,y:pOut.y})
+      // if(pOut && pIn)
+      //   drawLine(pOut,{x:pOut.x+(dimension.width/3)+dimension.margin,y:pOut.y})
 
 
     })

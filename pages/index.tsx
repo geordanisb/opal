@@ -1,19 +1,17 @@
-import {  Alert, Breadcrumbs, Button, CircularProgress, Container, Divider, FormControl, Backdrop, Grid, Input, InputLabel, MenuItem, Select, Snackbar, Typography, Chip, Drawer, IconButton, FormLabel, RadioGroup, FormControlLabel, Radio, TextField } from '@mui/material';
-import { CalendarPicker, MonthPicker, YearPicker } from '@mui/x-date-pickers';
+import {  Alert, Breadcrumbs, Button, CircularProgress, Divider, FormControl, Backdrop, Grid, InputLabel, MenuItem, Select, Snackbar, Typography, Chip, Drawer, IconButton, FormLabel, RadioGroup, FormControlLabel, Radio, Checkbox } from '@mui/material';
 import { Box } from '@mui/system';
 import MenuIcon from '@mui/icons-material/Menu';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import useDrawMapAndGraphByDistrictVegaLite from '@/src/hooks/useDrawMapAndGraphByDistrictVegaLite';
 import { ArrowForward, HighlightOff, NavigateNext } from '@mui/icons-material';
-import moment, { Moment, months } from 'moment'
+import moment from 'moment'
 import { DataMonthly, DataWeekly, DataYearly } from '@/src/types/Data';
-import { DataGrid, GridValueGetterParams } from '@mui/x-data-grid';
+// import { DataGrid, GridValueGetterParams } from '@mui/x-data-grid';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import csv from 'csvtojson'
 import path from 'node:path'
 import { NextPage } from 'next';
 import { DistrictsMap } from '@/src/constants';
-
 
 const algoritms = {
     movement:{name:'Mobility (Travels)',description:"Average number of antennas visited by subscribers for a specific timeframe, starting from district_one to district_two (the maximum number of cell towers the user could visit is 500)."},
@@ -27,32 +25,31 @@ const locations = {
 1:'District',
 2:'National',
 }
-const columns = [
-    {field:'date_from',headerName:'date_from',width:110,
-        valueGetter: (params: GridValueGetterParams) => `${moment(params.row.date_from).format('ll')}`
-    },
-    {field:'date_to',headerName:'date_to',width:110,
-        valueGetter: (params: GridValueGetterParams) => `${moment(params.row.date_to).format('ll')}`
-    },
-    {field:'district_out',headerName:'district_out',width:100},
-    {field:'district_in',headerName:'district_in',width:100},
-    {field:'subscriber_in',headerName:'subscriber_in',width:100},
-    {field:'subscriber_out',headerName:'subscriber_out',width:110},
-    {field:'density_in',headerName:'density_in',width:100},
-    {field:'density_out',headerName:'density_out',width:100},
-    {field:'sms_in',headerName:'sms_in',width:100},
-    {field:'sms_out',headerName:'sms_out',width:100},
-    {field:'call_in',headerName:'call_in',width:100},
-    {field:'call_out',headerName:'call_out',width:100},
-    {field:'movement',headerName:'movement',width:100},
-]
+// const columns = [
+//     {field:'date_from',headerName:'date_from',width:110,
+//         valueGetter: (params: GridValueGetterParams) => `${moment(params.row.date_from).format('ll')}`
+//     },
+//     {field:'date_to',headerName:'date_to',width:110,
+//         valueGetter: (params: GridValueGetterParams) => `${moment(params.row.date_to).format('ll')}`
+//     },
+//     {field:'district_out',headerName:'district_out',width:100},
+//     {field:'district_in',headerName:'district_in',width:100},
+//     {field:'subscriber_in',headerName:'subscriber_in',width:100},
+//     {field:'subscriber_out',headerName:'subscriber_out',width:110},
+//     {field:'density_in',headerName:'density_in',width:100},
+//     {field:'density_out',headerName:'density_out',width:100},
+//     {field:'sms_in',headerName:'sms_in',width:100},
+//     {field:'sms_out',headerName:'sms_out',width:100},
+//     {field:'call_in',headerName:'call_in',width:100},
+//     {field:'call_out',headerName:'call_out',width:100},
+//     {field:'movement',headerName:'movement',width:100},
+// ]
 interface Props{
     data:{
         monthly:DataMonthly[],
         weekly:DataWeekly[],
         yearly:DataYearly[],
     }
-    
 }
 
 const Home:NextPage<Props> = (props) => {
@@ -80,7 +77,9 @@ const Home:NextPage<Props> = (props) => {
   const [data,setData] = useState<(DataMonthly|DataWeekly|DataYearly)[]>([])
 
   const [loading,setLoading] = useState(false)
-  const {Map} = useDrawMapAndGraphByDistrictVegaLite(district,districtIn,districtOut,algorithm,data)
+  const [doRender,setDoRender] = useState(false)
+  const [excludeOutEqIN,setExcludeOutEqIN] = useState(false)
+  const {Map} = useDrawMapAndGraphByDistrictVegaLite(district,districtIn,districtOut,algorithm,data,doRender)
 
   const [drawerShow,setDrawerShow] = useState(true) 
 
@@ -161,8 +160,6 @@ const Home:NextPage<Props> = (props) => {
   }
 
   const validDates = ()=>{
-    // if(date && to)
-    //     return moment(from).isSameOrBefore(moment(to))
     if(periodType=='weekly')
         return weekFrom && weekTo
     else if(periodType=='monthly')
@@ -174,31 +171,6 @@ const Home:NextPage<Props> = (props) => {
   const isValidForm = ()=>{
     return algorithm && location && (district&&district.length || districtIn&&districtOut)  && validDates()
   }
-
-//   const onChangeDate = (name,e)=>{
-//     const val = e.target.value
-
-//     if(name=='date'){
-//         if(!validDates(val,'dateTo')){
-//             setError(`Invalid 'From' value: ${val}`)
-//         }
-//         else{
-//             setDate(()=>moment(val));
-//         }
-//     }
-//     else if(name=='dateTo'){
-//         if(!validDates(date,val)){
-//             setError(`Invalid 'To' value: ${val}`)
-//         }
-//         else{
-//             setDateTo(()=>moment(val));
-//         }
-//     }
-    
-
-//   }
-
-  
 
   const reset = ()=>{
     setAlgoritm('movement')
@@ -212,41 +184,15 @@ const Home:NextPage<Props> = (props) => {
     setData([])
   }
 
-//   const getAPI_Fetch_URL = ()=>{
-//     let url = `/api/data?`;
-    
-//     const dq = district.reduce((p,c)=>{
-//         p = p ? p+=`&district=${c}` : `district=${c}`;
-//         return p;
-//     },'')
-
-//     const yq = years.reduce((p,c)=>{
-//         p = p ? p+=`&year=${c}` : `&year=${c}`;
-//         return p;
-//     },'')
-
-//     if(periodType=='weekly' && dateFrom && dateTo){
-//         url += `${dq}&from=${dateFrom?dateFrom.format(dateFormat):''}&to=${dateTo?dateTo.format(dateFormat):''}`
-//     }
-//     else if(periodType=='monthly' && yearFrom && month){
-//         const from = moment(`${yearFrom}-${month}-01`).format(dateFormat)
-//         url += `${dq}&month=${from}`
-//     }
-//     else if(periodType=='yearly' && years && years.length){
-//         url += `${dq}${yq}`
-//     }
-//     return url
-
-//   }
-
   const submit =  (e)=>{
     e.preventDefault()
     setLoading(true)
     let d=[];
+
     if(periodType == 'weekly' && weekFrom&&weekTo){
         const date_from = moment(weekFrom.split('-')[0],'DD-MM-YYYY')
         const date_to = moment(weekTo.split('-')[1],'DD-MM-YYYY')
-
+        
         d = props.data.weekly.filter(i=>{
             const df = moment(i.date_from,'DD-MM-YYYY')
             const dt = moment(i.date_to,'DD-MM-YYYY')
@@ -265,27 +211,22 @@ const Home:NextPage<Props> = (props) => {
             return years == i.date
         })
     }
-    if(districtOut && districtIn)
-        d = d.filter(i=>(i.district_out == districtOut && i.district_in == districtIn))
+    if(excludeOutEqIN)
+            d = d.filter(i=>i.district_out != i.district_in)
+    if(districtOut && districtIn){
+        const o = d.filter(i=>(i.district_out == districtOut && i.district_in == districtIn))
+        const i = d.filter(i=>(i.district_in == districtOut && i.district_out == districtIn))
+        d = [...o,...i]
+    }
       
     else if(district && district.length)    
         d = d.filter(i=>district.includes(i.district_out))
     
     setData(d)
-    console.log('d',d)
+    setDoRender(true)
     setLoading(false)
     d.length ? setDrawerShow(false):setDrawerShow(true)
     
-    // const url = getAPI_Fetch_URL()
-    // fetch(url).then(r=>r.json())
-    // .then(({data:d})=>{
-    //     setData(d)   
-    //     setLoading(false)
-    //     setDrawerShow(s=>!s)
-    // })
-
-    
-    // const {data:d} = await r.json()
   }
 
   const toggleDrawer = (event: React.KeyboardEvent | React.MouseEvent) => {
@@ -304,13 +245,6 @@ const Home:NextPage<Props> = (props) => {
         return Object.entries(algoritms).map(([k,v])=>{
             return <MenuItem key={k} value={k}>{v.name}</MenuItem>
         })
-    }
-
-    const renderEventsAlgoritmMenuItems = ()=>{
-        return [
-            <MenuItem key={'call_out'} value={'call_out'}>Call</MenuItem>,
-            <MenuItem key={'sms_out'} value={'sms_out'}>SMS</MenuItem>
-        ]
     }
 
     const renderYearsMenuItems = ()=>{
@@ -480,6 +414,7 @@ const Home:NextPage<Props> = (props) => {
                 </MenuItem>)}
                 </Select>
             </FormControl>
+                
                 </Box>
         }
         return <></>
@@ -566,11 +501,6 @@ const Home:NextPage<Props> = (props) => {
                                 </Select>
                             </FormControl>
 
-{/* 
-                <Typography variant='body2' fontWeight={'bold'} margin={'.5em 0 0'}>Years (type a year and press "Enter")*</Typography>
-                <TextField variant="standard" type={'number'} onKeyUp={onKeyUpYear}  />
-                {years.map((y)=><Chip key={y} label={y}/>)}
-                 */}
             </Box>
         }
         return <></>
@@ -589,8 +519,6 @@ const Home:NextPage<Props> = (props) => {
                 }
             `}
         </style>
-                {/* <Grid container marginTop={0} spacing={2}> */}
-                    {/* <Grid item xs={12} md={4} sx={{backgroundColor:'#F4F4F4'}}> */}
                     <Box>
                             <IconButton color="primary" edge="end" onClick={toggleDrawer}> 
                                 <MenuIcon />
@@ -621,22 +549,6 @@ const Home:NextPage<Props> = (props) => {
                                     {renderAlgoritmMenuItems()}
                                 </Select>
                             </FormControl>
-                            {/* {algorithm=='events' ? <>
-                                <Typography variant='body2' fontWeight={'bold'} marginBottom='1em'>Specific Event Topic*</Typography>
-                                <FormControl fullWidth>
-                                    <InputLabel id="select-algorithm-events">Select the specific event you want to explore.</InputLabel>
-                                    <Select
-                                    labelId="select-algorithm-events"
-                                    value={algorithm}
-                                    label="Select the algorithm you want to explore."
-                                    onChange={onChangeAlgoritm}
-                                    >
-                                        {renderEventsAlgoritmMenuItems()}
-                                    </Select>
-                                </FormControl>
-                            </>
-                            : <></>
-                            } */}
                         </Box>
                         <Box marginTop={'.5em'}>
                             <Typography variant='body2' fontWeight={'bold'} marginBottom='1em'>Location*</Typography>
@@ -649,14 +561,20 @@ const Home:NextPage<Props> = (props) => {
                                 onChange={onChangeLocation}
                                 >
                                 {Object.entries(locations).map(([k,v,])=><MenuItem value={k} key={k}>{v}</MenuItem>)}
-                                    {/* <MenuItem value={1}>Neighborhood</MenuItem> */}
-                                    {/* <MenuItem value={1}>District</MenuItem> */}
-                                    {/* <MenuItem value={3}>Island</MenuItem> */}
-                                    {/* <MenuItem value={2}>National</MenuItem> */}
                                 </Select>
                             </FormControl>
                         </Box>
                         {renderDistrictControls()}
+                        <Box>
+                        <FormControl fullWidth>
+                            <FormControlLabel control={<Checkbox
+                                checked={excludeOutEqIN}
+                                onChange={(e)=>setExcludeOutEqIN(!excludeOutEqIN)}
+                                inputProps={{ 'aria-label': 'Exclude out equals to in' }}
+                                />}   label="Exclude out equals to in" /> 
+                        </FormControl>
+
+                        </Box>
                         <Box>
                         <FormControl>
                             <FormLabel id="demo-controlled-radio-buttons-group">
@@ -671,12 +589,10 @@ const Home:NextPage<Props> = (props) => {
                                 <FormControlLabel value="weekly" control={<Radio />} label="Weekly" />
                                 <FormControlLabel value="monthly" control={<Radio />} label="Monthly" />
                                 <FormControlLabel value="yearly" control={<Radio />} label="Yearly" />
-
                             </RadioGroup>
                             </FormControl>
                         </Box>
                         {renderDateControls()}
-                        
                         <Box justifyContent={'center'} display='flex' sx={{margin:'.5em 0'}}>
                             <Button variant='contained' disabled={!isValidForm() || loading} sx={{textTransform:'none',width:'126px',borderRadius:'2em'}} color='primary' endIcon={<ArrowForward/>} onClick={submit}>Submit</Button>
                         </Box>
@@ -685,9 +601,6 @@ const Home:NextPage<Props> = (props) => {
                         </Box>
                     </Box>
                 </Drawer>
-                
-                    {/* </Grid> */}
-                    {/* <Grid item xs={12} md={8} > */}
                 <Box sx={{padding:'.8em'}}>
                     <Typography color='primary' fontWeight={'bold'} textTransform={'uppercase'} variant='h6' >
                         SAFE ANSWER
@@ -700,30 +613,7 @@ const Home:NextPage<Props> = (props) => {
                         <Box>
                             <Map></Map>
                         </Box>
-                    
-                    {/* <Grid container>
-                        <Grid item xs={12} md={4}>
-                            <Map></Map>
-                        </Grid>
-                        <Grid item xs={12} md={8}>
-                    
-                            {dimensions && data && data.length ?<div style={{ height: dimensions.height, width: '100%' }}>
-                                <DataGrid
-                                    getRowId={(r)=>`${r.date_from}-${r.date_to}-${r.district_in}-${r.district_out}`}
-                                    autoPageSize 
-                                    pagination 
-                                    rows={data}
-                                    columns={columns}
-                                    checkboxSelection
-                                />
-                            </div>: <></> }
-                        </Grid>
-                    </Grid> */}
                 </Box>
-                
-                    {/* </Grid> */}
-                {/* </Grid> */}
-
                 <Snackbar 
                     open={!!error} 
                     autoHideDuration={6000} 
@@ -732,16 +622,13 @@ const Home:NextPage<Props> = (props) => {
                 >
                 <Alert severity="warning"><>{error}</></Alert>
                 </Snackbar>
-
                 <Backdrop
                 sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
                 open={loading}
                 >
                     <CircularProgress color="inherit" />
                 </Backdrop>
-
     </Box>
-
 }
 export const getServerSideProps = async ()=>{
     const mp = path.join(process.cwd(),'public','static','data','opal_synthetic','monthly.csv')
@@ -765,4 +652,3 @@ export const getServerSideProps = async ()=>{
     }
 }
 export default Home
-
