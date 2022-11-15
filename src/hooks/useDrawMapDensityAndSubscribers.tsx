@@ -30,7 +30,7 @@ const useDrawMapDensityAndSubscribers = (district:string[],topic:Topic,data:Data
   useEffect(()=>{
     if(canDraw()){
       const {width,height} = dimension
-      let aggregate = 'sum'
+      let aggregate = topic == 'density' ? 'mean' : 'sum'
       
       const colorDomain = {
         subscribers: [50e6,100e6,150e6,250e6,300e6],

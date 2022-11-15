@@ -102,21 +102,22 @@ const useDrawMapMovilityAndEvents = (districtOut:string,districtIn:string,topic:
             "projection": {"type": "albersUsa"},
             "mark": {
               type:"geoshape",
+              fill:'gainsboro'
             },
             "encoding": {
               "shape": {
                 "field": "geo",
                 "type": "geojson",
               },
-              "color": {
-                "field": `${topic}`,
-                // type:"ordinal"
-                "type": "quantitative",
-                scale:{
-                  // domain:colorDomain[topic],
-                  range:['#c3ddf4','#6fa7db','#0e4d8b']
-                }
-              },
+              // "color": {
+              //   "field": `${topic}`,
+              //   // type:"ordinal"
+              //   "type": "quantitative",
+              //   scale:{
+              //     // domain:colorDomain[topic],
+              //     range:['#c3ddf4','#6fa7db','#0e4d8b']
+              //   }
+              // },
               tooltip:[
                 {
                   field:'label',
@@ -168,21 +169,22 @@ const useDrawMapMovilityAndEvents = (districtOut:string,districtIn:string,topic:
             "projection": {"type": "albersUsa"},
             "mark": {
               type:"geoshape",
+              fill:'cadetblue'
             },
             "encoding": {
               "shape": {
                 "field": "geo",
                 "type": "geojson",
               },
-              "color": {
-                "field": `${topic}`,
-                // type:"ordinal"
-                "type": "quantitative",
-                scale:{
-                  // domain:colorDomain[topic],
-                  range:['#c3ddf4','#6fa7db','#0e4d8b']
-                }
-              },
+              // "color": {
+              //   "field": `${topic}`,
+              //   // type:"ordinal"
+              //   "type": "quantitative",
+              //   scale:{
+              //     // domain:colorDomain[topic],
+              //     range:['#c3ddf4','#6fa7db','#0e4d8b']
+              //   }
+              // },
               tooltip:[
                 {
                   field:'label',
