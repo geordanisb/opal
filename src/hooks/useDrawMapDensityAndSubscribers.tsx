@@ -7,7 +7,7 @@ import { Box } from '@mui/system'
 import { MonthlyDensitySubscriber, Topic, WeeklyDensitySubscriber, YearlyDensitySubscriber } from '../types/Data'
 
 type Data = MonthlyDensitySubscriber|WeeklyDensitySubscriber|YearlyDensitySubscriber
-const useDrawMapDensityAndSubscribers = (district:string[],topic:Topic,data:Data[],doRender=false)=>{
+const useDrawMapDensityAndSubscribers = (district:string[],topic:Topic,data:Record<string,any>[],doRender=false)=>{
   const [dimension,setDimensions] = useState<Dimension>()
 
   const [spec,setSpec] = useState<Record<string,any>>()

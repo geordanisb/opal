@@ -6,7 +6,7 @@ import { Box } from '@mui/system'
 import { MonthlyMobilityEvent, Topic, WeeklyMobilityEvent, YearlyMobilityEvent } from '../types/Data'
 
 type Data = MonthlyMobilityEvent|WeeklyMobilityEvent|YearlyMobilityEvent
-const useDrawMapMovilityAndEvents = (districtOut:string,districtIn:string,topic:Topic,data:Data[],doRender=false)=>{
+const useDrawMapMovilityAndEvents = (districtOut:string,districtIn:string,topic:Topic,data:Record<string,any>[],doRender=false)=>{
   const [dimension,setDimensions] = useState<Dimension>()
 
   const [spec,setSpec] = useState<Record<string,any>>()

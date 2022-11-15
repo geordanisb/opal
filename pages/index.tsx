@@ -1,7 +1,7 @@
 import {  Alert, Breadcrumbs, Button, CircularProgress, Divider, FormControl, Backdrop, Grid, InputLabel, MenuItem, Select, Snackbar, Typography, Chip, Drawer, IconButton, FormLabel, RadioGroup, FormControlLabel, Radio, Checkbox } from '@mui/material';
 import { Box } from '@mui/system';
 import MenuIcon from '@mui/icons-material/Menu';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ArrowForward, HighlightOff, NavigateNext } from '@mui/icons-material';
 import moment from 'moment'
 import { MonthlyDensitySubscriber, MonthlyMobilityEvent, Topic, WeeklyDensitySubscriber, WeeklyMobilityEvent, YearlyDensitySubscriber, YearlyMobilityEvent } from '@/src/types/Data';
@@ -63,7 +63,7 @@ interface Props{
         },
     }
 }
-const Home:NextPage<Props> = (props) => {
+const Home:NextPage<Props> = () => {
   const yearsMap = [2020,2021,2022]
 
   const [error,setError] = useState('')
@@ -84,15 +84,37 @@ const Home:NextPage<Props> = (props) => {
   const [weekFrom,setWeekFrom] = useState<string>('')
   const [weekTo,setWeekTo] = useState<string>('')
 
+  const fetchData = ()=>{
+    const t = isMobilityOrEvent() ? 'mobility_events' : 'density_subscriber'
+    const url = `/api/${periodType}?topic=${t}`
+    return fetch(url).then(r=>r.json())
+  }
+    const [data,setData] = useState<Record<string,any>[]>([])
+
+    useEffect(()=>{
+        const fn = async ()=>{
+            const {data:d} = await fetchData();
+            debugger;
+            if(d)setData(d)
+        }
+        if(periodType && topic){
+            debugger;
+            fn()
+        }
+    },[periodType,topic])
+
+
   const [dataMovilityAndEvents,setDataMovilityAndEvents] = useState<(MobilityEvent)[]>([])
   const [dataDensityAndSubscribers,setDataDensityAndSubscribers] = useState<(DensitySubscriber)[]>([])
 
-
   const [loading,setLoading] = useState(false)
-  const [doRender,setDoRender] = useState(false)
+
+  const [doRenderMovilityAndEvents,setDoRenderMovilityAndEvents] = useState(false)
+  const [doRenderDensityAndSubscribers,setDoRenderDensityAndSubscribers] = useState(false)
+
 //   const [excludeOutEqIN,setExcludeOutEqIN] = useState(false)
-  const {Map:MapMovilityAndEvents} = useDrawMapMovilityAndEvents(districtIn,districtOut,topic,dataMovilityAndEvents,doRender)
-  const {Map:MapDensityAndSubscribers} = useDrawMapDensityAndSubscribers(district,topic,dataDensityAndSubscribers,doRender)
+  const {Map:MapMovilityAndEvents} = useDrawMapMovilityAndEvents(districtIn,districtOut,topic,data,doRenderMovilityAndEvents)
+  const {Map:MapDensityAndSubscribers} = useDrawMapDensityAndSubscribers(district,topic,data,doRenderDensityAndSubscribers)
 
   
 
@@ -194,7 +216,7 @@ const Home:NextPage<Props> = (props) => {
     return true
   }
   const isValidForm = ()=>{
-    return topic && location && (district&&district.length || districtIn&&districtOut)  && validDates()
+    return topic && location && (district&&district.length || districtIn&&districtOut)  && validDates() && data && data.length
   }
 
   const reset = ()=>{
@@ -213,19 +235,14 @@ const Home:NextPage<Props> = (props) => {
   const isMobilityOrEvent = ()=>['movement','call_out','sms_out'].includes(topic) 
 
 
-  const submit =  (e)=>{debugger;
+  const submit =  async (e)=>{debugger;
     e.preventDefault()
     setLoading(true)
-    let d=[];
-
+    let d = data
 
     if(periodType == 'weekly' && weekFrom&&weekTo){
         const date_from = moment(weekFrom.split('-')[0],'DD-MM-YYYY')
         const date_to = moment(weekTo.split('-')[1],'DD-MM-YYYY')
-
-        d = isMobilityOrEvent() 
-        ? props.data.weekly.mobility_events
-        : props.data.weekly.density_subscribers
 
         d = d.filter(i=>{
             const df = moment(i.date_from,'DD-MM-YYYY')
@@ -237,18 +254,11 @@ const Home:NextPage<Props> = (props) => {
          
     }
     else if(periodType == 'monthly' && months){
-        d = isMobilityOrEvent() 
-        ? props.data.monthly.mobility_events
-        : props.data.monthly.density_subscribers
-        
         d = d.filter(i=>{
             return months == i.date
         })
     }
     else if(periodType == 'yearly' && years){
-        d = isMobilityOrEvent()
-        ? props.data.yearly.mobility_events
-        : props.data.yearly.density_subscribers
         d = d.filter(i=>{
             return years == i.date
         })
@@ -266,14 +276,18 @@ const Home:NextPage<Props> = (props) => {
         d = d.filter(i=>district.includes(i.district_in))
     
     if(isMobilityOrEvent()){
-        setDataMovilityAndEvents(d)
+        // setDataMovilityAndEvents(d)
+        setDoRenderMovilityAndEvents(true)
+        setDoRenderDensityAndSubscribers(false)
+
     }
     else{
-        setDataDensityAndSubscribers(d)
+        // setDataDensityAndSubscribers(d)
+        setDoRenderMovilityAndEvents(false)
+        setDoRenderDensityAndSubscribers(true)
     }
-    setDoRender(true)
     setLoading(false)
-    d.length ? setDrawerShow(false):setDrawerShow(true)
+    data && data.length ? setDrawerShow(false):setDrawerShow(true)
   }
 
   const toggleDrawer = (event: React.KeyboardEvent | React.MouseEvent) => {
@@ -298,58 +312,42 @@ const Home:NextPage<Props> = (props) => {
     }
 
     const renderMonthsMenuItems = ()=>{
-        let months =[]
-        if(isMobilityOrEvent())
-            months = props.data.monthly.mobility_events.map(d=>d.date)
-        else 
-            months = props.data.monthly.density_subscribers.map(d=>d.date)
+        if(data && data.length){
+            let months = data.map(d=>d.date)
+            
+            if(years)
+                months = months.filter(i=>years.includes(i.split('-')[0]))
+            months =  Array.from(new Set(months))
+    
+            return months.map(y=><MenuItem key={y} value={`${y}`}>{y}</MenuItem>)
 
-        if(years)
-            months = months.filter(i=>years.includes(i.split('-')[0]))
-        months =  Array.from(new Set(months))
-
-        return months.map(y=><MenuItem key={y} value={`${y}`}>{y}</MenuItem>)
+        }
+        return []
     }
 
-    const renderWeeksMenuItems = (validateTo=false)=>{
-        let weeks = []
-        if(periodType=='weekly'){
-           if(isMobilityOrEvent){
-            props.data.weekly.mobility_events.reduce((p,c)=>{
+    const renderWeeksMenuItems =  (validateTo=false)=>{
+        if(data && data.length){
+            let weeks = data.reduce((p,c)=>{
                 const k = `${c.date_from}-${c.date_to}`
                 if(weekFrom && validateTo){
                     const cy = moment(c.date_from,'DD-MM-YYYY')
                     const [date_from,date_to] = weekFrom.split('-')
                     if(moment(c.date_to,'DD-MM-YYYY').isAfter(moment(date_to,'DD-MM-YYYY')))
                         p.push(k)
-
+    
                     return p;
                 }
                 else{
                     p.push(k)
                     return p;
                 }
-            },weeks)
-           }
-           else{
-            props.data.weekly.density_subscribers.reduce((p,c)=>{
-                const k = `${c.date_from}-${c.date_to}`
-                if(weekFrom && validateTo){
-                    const cy = moment(c.date_from,'DD-MM-YYYY')
-                    const [date_from,date_to] = weekFrom.split('-')
-                    if(moment(c.date_to,'DD-MM-YYYY').isAfter(moment(date_to,'DD-MM-YYYY')))
-                        p.push(k)
+            },[])
+    
+            if(periodType=='weekly'){
+                weeks =  Array.from(new Set(weeks as Record<string,any>[]))
+                return weeks.map(y=><MenuItem key={y} value={`${y}`}>{y}</MenuItem>)
+            }
 
-                    return p;
-                }
-                else{
-                    p.push(k)
-                    return p;
-                }
-            },weeks)
-           }
-            weeks =  Array.from(new Set(weeks))
-            return weeks.map(y=><MenuItem key={y} value={`${y}`}>{y}</MenuItem>)
         }
         return []
     }
@@ -691,44 +689,47 @@ const Home:NextPage<Props> = (props) => {
                 </Backdrop>
     </Box>
 }
-export const getServerSideProps = async ()=>{
-    const basePath = [process.cwd(),'public','static','data']
 
-    const mdsP = path.join(...basePath,'monthly','density_subscribers.csv')
-    const mmeP = path.join(...basePath,'monthly','mobility_events.csv')
+// export const getServerSideProps = async ()=>{debugger;
+//     const url ='http://localhost:3000/api/yearly?topic=mobility_events'
+//     // const basePath = [process.cwd(),'public','static','data']
+// const res = await fetch(url).then(r=>r.json()).then(d=>d)
+//     // const mdsP = path.join(...basePath,'monthly','density_subscribers.csv')
+//     // const mmeP = path.join(...basePath,'monthly','mobility_events.csv')
 
-    const wdsP = path.join(...basePath,'weekly','density_subscribers.csv')
-    const wmeP = path.join(...basePath,'weekly','mobility_events.csv')
+//     // const wdsP = path.join(...basePath,'weekly','density_subscribers.csv')
+//     // const wmeP = path.join(...basePath,'weekly','mobility_events.csv')
 
-    const ydsP = path.join(...basePath,'yearly','density_subscribers.csv')
-    const ymeP = path.join(...basePath,'yearly','mobility_events.csv')
+//     // const ydsP = path.join(...basePath,'yearly','density_subscribers.csv')
+//     // const ymeP = path.join(...basePath,'yearly','mobility_events.csv')
 
-    const [mds,mme,wds,wme,yds,yme] = await Promise.all([
-        csv().fromFile(mdsP),
-        csv().fromFile(mmeP),
-        csv().fromFile(wdsP),
-        csv().fromFile(wmeP),  
-        csv().fromFile(ydsP),  
-        csv().fromFile(ymeP),  
-    ])
+//     // const [mds,mme,wds,wme,yds,yme] = await Promise.all([
+//     //     csv().fromFile(mdsP),
+//     //     csv().fromFile(mmeP),
+//     //     csv().fromFile(wdsP),
+//     //     csv().fromFile(wmeP),  
+//     //     csv().fromFile(ydsP),  
+//     //     csv().fromFile(ymeP),  
+//     // ])
     
-    return {
-        props:{
-            data:{
-                monthly:{
-                    density_subscribers:mds,
-                    mobility_events:mme
-                },
-                weekly:{
-                    density_subscribers:wds,
-                    mobility_events:wme
-                },
-                yearly:{
-                    density_subscribers:yds,
-                    mobility_events:yme
-                }
-            }
-        }
-    }
-}
+//     return {
+//         props:{
+//             res
+//             // data:{
+//             //     monthly:{
+//             //         density_subscribers:mds,
+//             //         mobility_events:mme
+//             //     },
+//             //     weekly:{
+//             //         density_subscribers:wds,
+//             //         mobility_events:wme
+//             //     },
+//             //     yearly:{
+//             //         density_subscribers:yds,
+//             //         mobility_events:yme
+//             //     }
+//             // }
+//         }
+//     }
+// }
 export default Home
