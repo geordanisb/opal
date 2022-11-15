@@ -314,7 +314,7 @@ const Home:NextPage<Props> = (props) => {
     const renderWeeksMenuItems = (validateTo=false)=>{
         let weeks = []
         if(periodType=='weekly'){
-           if(isMobilityOrEvent()){
+           if(isMobilityOrEvent){
             props.data.weekly.mobility_events.reduce((p,c)=>{
                 const k = `${c.date_from}-${c.date_to}`
                 if(weekFrom && validateTo){
@@ -692,7 +692,7 @@ const Home:NextPage<Props> = (props) => {
     </Box>
 }
 export const getServerSideProps = async ()=>{
-    const basePath = [process.cwd(),'public','static','data','opal_synthetic']
+    const basePath = [process.cwd(),'public','static','data']
 
     const mdsP = path.join(...basePath,'monthly','density_subscribers.csv')
     const mmeP = path.join(...basePath,'monthly','mobility_events.csv')
@@ -703,21 +703,14 @@ export const getServerSideProps = async ()=>{
     const ydsP = path.join(...basePath,'yearly','density_subscribers.csv')
     const ymeP = path.join(...basePath,'yearly','mobility_events.csv')
 
-    const mds = await csv().fromFile(mdsP)
-    const mme = await csv().fromFile(mmeP)
-    const wds = await csv().fromFile(wdsP)
-    const wme = await csv().fromFile(wmeP)  
-    const yds = await csv().fromFile(ydsP)  
-    const yme = await csv().fromFile(ymeP) 
-
-    // const [mds,mme,wds,wme,yds,yme] = await Promise.all([
-    //     csv().fromFile(mdsP),
-    //     csv().fromFile(mmeP),
-    //     csv().fromFile(wdsP),
-    //     csv().fromFile(wmeP),  
-    //     csv().fromFile(ydsP),  
-    //     csv().fromFile(ymeP),  
-    // ])
+    const [mds,mme,wds,wme,yds,yme] = await Promise.all([
+        csv().fromFile(mdsP),
+        csv().fromFile(mmeP),
+        csv().fromFile(wdsP),
+        csv().fromFile(wmeP),  
+        csv().fromFile(ydsP),  
+        csv().fromFile(ymeP),  
+    ])
     
     return {
         props:{
