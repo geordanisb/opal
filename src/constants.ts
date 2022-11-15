@@ -1,9 +1,9 @@
 export const DistrictsMap = {
-    15:{label:'Cremont',state:'Hawaii',id:15},
-    26:{label:'Portico',state:'Michigan',id:26},
+    6:{label:'Cremont',state:'California',id:6},
+    21:{label:'Portico',state:'Kentucky',id:21},
     48:{label:'Metromic',state:'Texas',id:48},
     53:{label:'Stonewall',state:'Washington',id:53},
-    54:{label:'Seabrook',state:'West Virginia',id:54}
+    19:{label:'Seabrook',state:'Iowa',id:19}
 }
 
 /**

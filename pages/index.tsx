@@ -2,18 +2,19 @@ import {  Alert, Breadcrumbs, Button, CircularProgress, Divider, FormControl, Ba
 import { Box } from '@mui/system';
 import MenuIcon from '@mui/icons-material/Menu';
 import React, { useState } from 'react';
-import useDrawMapAndGraphByDistrictVegaLite from '@/src/hooks/useDrawMapAndGraphByDistrictVegaLite';
 import { ArrowForward, HighlightOff, NavigateNext } from '@mui/icons-material';
 import moment from 'moment'
-import { DataMonthly, DataWeekly, DataYearly } from '@/src/types/Data';
+import { MonthlyDensitySubscriber, MonthlyMobilityEvent, Topic, WeeklyDensitySubscriber, WeeklyMobilityEvent, YearlyDensitySubscriber, YearlyMobilityEvent } from '@/src/types/Data';
 // import { DataGrid, GridValueGetterParams } from '@mui/x-data-grid';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import csv from 'csvtojson'
 import path from 'node:path'
 import { NextPage } from 'next';
 import { DistrictsMap } from '@/src/constants';
+import useDrawMapMovilityAndEvents from '@/src/hooks/useDrawMapMovilityAndEvents';
+import useDrawMapDensityAndSubscribers from '@/src/hooks/useDrawMapDensityAndSubscribers';
 
-const algoritms = {
+const topics = {
     movement:{name:'Mobility (Travels)',description:"Average number of antennas visited by subscribers for a specific timeframe, starting from district_one to district_two (the maximum number of cell towers the user could visit is 500)."},
     density:{name:'Density',description:"The number of home-located subscribers (who pin the same antenna for a determined period of time during a day) divided by the km’2 for a given area within a specific timeframe."},
     subscribers:{name:'Subscribers',description:"The active number of SIM cards registered with the mobile network operator (MNO) in a specific district within a period of time."},
@@ -44,20 +45,30 @@ const locations = {
 //     {field:'call_out',headerName:'call_out',width:100},
 //     {field:'movement',headerName:'movement',width:100},
 // ]
+type DensitySubscriber = MonthlyDensitySubscriber|WeeklyDensitySubscriber|YearlyDensitySubscriber
+type MobilityEvent = MonthlyMobilityEvent|WeeklyMobilityEvent|YearlyMobilityEvent
 interface Props{
     data:{
-        monthly:DataMonthly[],
-        weekly:DataWeekly[],
-        yearly:DataYearly[],
+        monthly:{
+            density_subscribers:MonthlyDensitySubscriber[],
+            mobility_events:MonthlyMobilityEvent[]
+        },
+        weekly:{
+            density_subscribers:WeeklyDensitySubscriber[],
+            mobility_events:WeeklyMobilityEvent[]
+        },
+        yearly:{
+            density_subscribers:YearlyDensitySubscriber[],
+            mobility_events:YearlyMobilityEvent[]
+        },
     }
 }
-
 const Home:NextPage<Props> = (props) => {
   const yearsMap = [2020,2021,2022]
 
   const [error,setError] = useState('')
 
-  const [algorithm,setAlgoritm] = useState<string>('movement')
+  const [topic,setTopic] = useState<Topic>('movement')
 
   const districts = Object.keys(DistrictsMap)
   const [district,setDistrict] = useState<string[]>([])
@@ -73,19 +84,23 @@ const Home:NextPage<Props> = (props) => {
   const [weekFrom,setWeekFrom] = useState<string>('')
   const [weekTo,setWeekTo] = useState<string>('')
 
+  const [dataMovilityAndEvents,setDataMovilityAndEvents] = useState<(MobilityEvent)[]>([])
+  const [dataDensityAndSubscribers,setDataDensityAndSubscribers] = useState<(DensitySubscriber)[]>([])
 
-  const [data,setData] = useState<(DataMonthly|DataWeekly|DataYearly)[]>([])
 
   const [loading,setLoading] = useState(false)
   const [doRender,setDoRender] = useState(false)
-  const [excludeOutEqIN,setExcludeOutEqIN] = useState(false)
-  const {Map} = useDrawMapAndGraphByDistrictVegaLite(district,districtIn,districtOut,algorithm,data,doRender)
+//   const [excludeOutEqIN,setExcludeOutEqIN] = useState(false)
+  const {Map:MapMovilityAndEvents} = useDrawMapMovilityAndEvents(districtIn,districtOut,topic,dataMovilityAndEvents,doRender)
+  const {Map:MapDensityAndSubscribers} = useDrawMapDensityAndSubscribers(district,topic,dataDensityAndSubscribers,doRender)
+
+  
 
   const [drawerShow,setDrawerShow] = useState(true) 
 
   const onChangeAlgoritm = (e)=>{
     const v = e.target.value
-    setAlgoritm(v)
+    setTopic(v)
 
     setLocation(1)
     setDistrict([])
@@ -94,7 +109,9 @@ const Home:NextPage<Props> = (props) => {
     setMonths('')
     setWeekFrom('')
     setWeekTo('')
-    setData([])  
+
+    setDataMovilityAndEvents([]) 
+    setDataDensityAndSubscribers([]) 
 
   }
 
@@ -111,7 +128,8 @@ const Home:NextPage<Props> = (props) => {
         setDistrictIn('')   
         setDistrict(()=>[...districts])
     }
-    setData(()=>[])    
+    setDataDensityAndSubscribers([]) 
+    setDataMovilityAndEvents(()=>[])    
 
   }
 
@@ -119,26 +137,30 @@ const Home:NextPage<Props> = (props) => {
     setDistrict(e.target.value)
     setDistrictIn('')
     setDistrictOut('')
-    setData(()=>[])    
+    setDataDensityAndSubscribers([]) 
+    setDataMovilityAndEvents(()=>[])    
   }
 
   const onChangeDistrictIn = (e)=>{
     setDistrictIn(e.target.value)
     setDistrict([])
-    setData([])    
+    setDataDensityAndSubscribers([]) 
+    setDataMovilityAndEvents([])    
   }
 
   const onChangeDistrictOut = (e)=>{
     setDistrictOut(e.target.value)
     setDistrict([])
     setDistrictIn('')
-    setData([])    
+    setDataDensityAndSubscribers([]) 
+    setDataMovilityAndEvents([])    
   }
 
   const onChangeYears = (e)=>{
     setYears(e.target.value)
     setMonths('')
-    setData(()=>[])    
+    setDataDensityAndSubscribers([]) 
+    setDataMovilityAndEvents(()=>[])    
   }
 
   const onChangeMonths = (e)=>{
@@ -146,17 +168,20 @@ const Home:NextPage<Props> = (props) => {
     setWeekFrom('')
     setWeekTo('')
 
-    setData(()=>[])    
+    setDataDensityAndSubscribers([]) 
+    setDataMovilityAndEvents(()=>[])    
   }
 
   const onChangeWeekFrom = (e)=>{
     setWeekFrom(e.target.value)
-    setData(()=>[])    
+    setDataDensityAndSubscribers([]) 
+    setDataMovilityAndEvents(()=>[])    
   }
 
   const onChangeWeekTo = (e)=>{
     setWeekTo(e.target.value)
-    setData(()=>[])    
+    setDataDensityAndSubscribers([]) 
+    setDataMovilityAndEvents(()=>[])    
   }
 
   const validDates = ()=>{
@@ -169,11 +194,11 @@ const Home:NextPage<Props> = (props) => {
     return true
   }
   const isValidForm = ()=>{
-    return algorithm && location && (district&&district.length || districtIn&&districtOut)  && validDates()
+    return topic && location && (district&&district.length || districtIn&&districtOut)  && validDates()
   }
 
   const reset = ()=>{
-    setAlgoritm('movement')
+    setTopic('movement')
     setLocation(1)
     setDistrict([])
     setPeriodType('weekly')
@@ -181,52 +206,74 @@ const Home:NextPage<Props> = (props) => {
     setMonths('')
     setWeekFrom('')
     setWeekTo('')
-    setData([])
+    setDataDensityAndSubscribers([]) 
+    setDataMovilityAndEvents([])
   }
 
-  const submit =  (e)=>{
+  const isMobilityOrEvent = ()=>['movement','call_out','sms_out'].includes(topic) 
+
+
+  const submit =  (e)=>{debugger;
     e.preventDefault()
     setLoading(true)
     let d=[];
 
+
     if(periodType == 'weekly' && weekFrom&&weekTo){
         const date_from = moment(weekFrom.split('-')[0],'DD-MM-YYYY')
         const date_to = moment(weekTo.split('-')[1],'DD-MM-YYYY')
-        
-        d = props.data.weekly.filter(i=>{
+
+        d = isMobilityOrEvent() 
+        ? props.data.weekly.mobility_events
+        : props.data.weekly.density_subscribers
+
+        d = d.filter(i=>{
             const df = moment(i.date_from,'DD-MM-YYYY')
             const dt = moment(i.date_to,'DD-MM-YYYY')
             const q1 = df.isBetween(date_from,date_to,undefined,'[]')
             const q2 = dt.isBetween(date_from,date_to,undefined,'[]')
             return q1 && q2
         })
+         
     }
     else if(periodType == 'monthly' && months){
-        d = props.data.monthly.filter(i=>{
+        d = isMobilityOrEvent() 
+        ? props.data.monthly.mobility_events
+        : props.data.monthly.density_subscribers
+        
+        d = d.filter(i=>{
             return months == i.date
         })
     }
     else if(periodType == 'yearly' && years){
-        d = props.data.yearly.filter(i=>{
+        d = isMobilityOrEvent()
+        ? props.data.yearly.mobility_events
+        : props.data.yearly.density_subscribers
+        d = d.filter(i=>{
             return years == i.date
         })
     }
-    if(excludeOutEqIN)
-            d = d.filter(i=>i.district_out != i.district_in)
-    if(districtOut && districtIn){
-        const o = d.filter(i=>(i.district_out == districtOut && i.district_in == districtIn))
-        const i = d.filter(i=>(i.district_in == districtOut && i.district_out == districtIn))
-        d = [...o,...i]
-    }
-      
-    else if(district && district.length)    
-        d = d.filter(i=>district.includes(i.district_out))
     
-    setData(d)
+    if(districtOut && districtIn && isMobilityOrEvent()){
+        const o = d.filter(i=>(i.district_out == districtOut && i.district_in == districtIn))
+        // const i = d.filter(i=>(i.district_in == districtOut && i.district_out == districtIn))
+        d = [
+            ...o,
+            // ...i
+        ]
+    }
+    else    
+        d = d.filter(i=>district.includes(i.district_in))
+    
+    if(isMobilityOrEvent()){
+        setDataMovilityAndEvents(d)
+    }
+    else{
+        setDataDensityAndSubscribers(d)
+    }
     setDoRender(true)
     setLoading(false)
     d.length ? setDrawerShow(false):setDrawerShow(true)
-    
   }
 
   const toggleDrawer = (event: React.KeyboardEvent | React.MouseEvent) => {
@@ -240,9 +287,8 @@ const Home:NextPage<Props> = (props) => {
       setDrawerShow(s=>!s);
     };
 
-
     const renderAlgoritmMenuItems = ()=>{
-        return Object.entries(algoritms).map(([k,v])=>{
+        return Object.entries(topics).map(([k,v])=>{
             return <MenuItem key={k} value={k}>{v.name}</MenuItem>
         })
     }
@@ -252,7 +298,12 @@ const Home:NextPage<Props> = (props) => {
     }
 
     const renderMonthsMenuItems = ()=>{
-        let months = props.data.monthly.map(d=>d.date)
+        let months =[]
+        if(isMobilityOrEvent())
+            months = props.data.monthly.mobility_events.map(d=>d.date)
+        else 
+            months = props.data.monthly.density_subscribers.map(d=>d.date)
+
         if(years)
             months = months.filter(i=>years.includes(i.split('-')[0]))
         months =  Array.from(new Set(months))
@@ -263,7 +314,8 @@ const Home:NextPage<Props> = (props) => {
     const renderWeeksMenuItems = (validateTo=false)=>{
         let weeks = []
         if(periodType=='weekly'){
-            props.data.weekly.reduce((p,c)=>{
+           if(isMobilityOrEvent()){
+            props.data.weekly.mobility_events.reduce((p,c)=>{
                 const k = `${c.date_from}-${c.date_to}`
                 if(weekFrom && validateTo){
                     const cy = moment(c.date_from,'DD-MM-YYYY')
@@ -273,29 +325,31 @@ const Home:NextPage<Props> = (props) => {
 
                     return p;
                 }
-                // else if(years && months){
-                //     const cy = moment(c.date_from,'DD-MM-YYYY')
-                //     if(years.includes(cy.year().toString())){
-                //         if(months.split('-')[1].includes(`${cy.month()+1}`))
-                //             p.push(k)
-                //     }
-                //     return p;
-                // }
-                // else if(years){
-                //     const cy = moment(c.date_from,'DD-MM-YYYY')
-                //     if(years==cy.year().toString()){
-                //         p.push(k)
-                //     }
-                //     return p;
-                // }
                 else{
                     p.push(k)
                     return p;
                 }
             },weeks)
+           }
+           else{
+            props.data.weekly.density_subscribers.reduce((p,c)=>{
+                const k = `${c.date_from}-${c.date_to}`
+                if(weekFrom && validateTo){
+                    const cy = moment(c.date_from,'DD-MM-YYYY')
+                    const [date_from,date_to] = weekFrom.split('-')
+                    if(moment(c.date_to,'DD-MM-YYYY').isAfter(moment(date_to,'DD-MM-YYYY')))
+                        p.push(k)
+
+                    return p;
+                }
+                else{
+                    p.push(k)
+                    return p;
+                }
+            },weeks)
+           }
             weeks =  Array.from(new Set(weeks))
             return weeks.map(y=><MenuItem key={y} value={`${y}`}>{y}</MenuItem>)
-
         }
         return []
     }
@@ -323,12 +377,12 @@ const Home:NextPage<Props> = (props) => {
             if(location==2)return <></>
             if(districtIn && districtOut)
                 return <>
-                    (<Typography display={'inline'} fontWeight={'bold'}>{`${DistrictsMap[districtOut].label} -> ${DistrictsMap[districtIn].label}`}</Typography>)
+                    (<span>{`${DistrictsMap[districtOut].label} -> ${DistrictsMap[districtIn].label}`}</span>)
                 </>
         }
         return <Breadcrumbs aria-label="breadcrumb" separator={<NavigateNext/>}>
             <Typography fontWeight={'bold'}>Dataland</Typography>
-            {algoritms[algorithm]?<Typography fontWeight={'bold'}>{algoritms[algorithm].name}</Typography>:undefined}
+            {topics[topic]?<Typography fontWeight={'bold'}>{topics[topic].name}</Typography>:undefined}
             {locations[location]?<Typography fontWeight={'bold'}>{locations[location]} {renderDistricts()}</Typography>:undefined}
             
             {renderDateBreadcrumb()}
@@ -338,7 +392,7 @@ const Home:NextPage<Props> = (props) => {
     const renderDistrictControls = ()=>{
         
         if(location == 1){
-            const boths = ['movement','events'].includes(algorithm)
+            const boths = isMobilityOrEvent()
             const din = <Box marginTop={'.5em'}>
             <Typography variant='body2' fontWeight={'bold'} marginBottom='1em'>District In*</Typography>
             <FormControl fullWidth>
@@ -488,27 +542,32 @@ const Home:NextPage<Props> = (props) => {
         }
         else if(periodType=='yearly'){
             return <Box>
-
-                            <FormControl fullWidth>
-                                <InputLabel id="select-years">Select the years you want to explore.</InputLabel>
-                                <Select
-                                labelId="select-years"
-                                value={years}
-                                label="Select the years you want to explore."
-                                onChange={onChangeYears}
-                                >
-                                    {renderYearsMenuItems()}
-                                </Select>
-                            </FormControl>
-
+                        <FormControl fullWidth>
+                            <InputLabel id="select-years">Select the years you want to explore.</InputLabel>
+                            <Select
+                            labelId="select-years"
+                            value={years}
+                            label="Select the years you want to explore."
+                            onChange={onChangeYears}
+                            >
+                                {renderYearsMenuItems()}
+                            </Select>
+                        </FormControl>
             </Box>
         }
         return <></>
     }
 
+    const renderLocationMenuItems = ()=>{
+        let l = {...locations};
+        if(isMobilityOrEvent())
+            delete l[2]
+        return Object.entries(l).map(([k,v,])=><MenuItem value={k} key={k}>{v}</MenuItem>)
+    }
+
     const onChangePeriodType = (e)=>{
         setPeriodType(e.target.value)
-        setData(()=>props.data[e.target.value])
+        // setDataMovilityAndEvents(()=>props.data[e.target.value])
     }
 
     return <Box>
@@ -539,11 +598,11 @@ const Home:NextPage<Props> = (props) => {
                         <Box marginTop={'.5em'}>
                             <Typography variant='body2' fontWeight={'bold'} marginBottom='1em'>Topic*</Typography>
                             <FormControl fullWidth>
-                                <InputLabel id="select-algorithm">Select the algorithm you want to explore.</InputLabel>
+                                <InputLabel id="select-topic">Select the topic you want to explore.</InputLabel>
                                 <Select
-                                labelId="select-algorithm"
-                                value={algorithm}
-                                label="Select the algorithm you want to explore."
+                                labelId="select-topic"
+                                value={topic}
+                                label="Select the topic you want to explore."
                                 onChange={onChangeAlgoritm}
                                 >
                                     {renderAlgoritmMenuItems()}
@@ -557,22 +616,22 @@ const Home:NextPage<Props> = (props) => {
                                 <Select
                                 labelId="select-mark"
                                 value={location}
-                                label="Select the algorithm you want to explore."
+                                label="Select the topic you want to explore."
                                 onChange={onChangeLocation}
                                 >
-                                {Object.entries(locations).map(([k,v,])=><MenuItem value={k} key={k}>{v}</MenuItem>)}
+                                {renderLocationMenuItems()}
                                 </Select>
                             </FormControl>
                         </Box>
                         {renderDistrictControls()}
                         <Box>
-                        <FormControl fullWidth>
+                        {/* <FormControl fullWidth>
                             <FormControlLabel control={<Checkbox
                                 checked={excludeOutEqIN}
                                 onChange={(e)=>setExcludeOutEqIN(!excludeOutEqIN)}
                                 inputProps={{ 'aria-label': 'Exclude out equals to in' }}
                                 />}   label="Exclude out equals to in" /> 
-                        </FormControl>
+                        </FormControl> */}
 
                         </Box>
                         <Box>
@@ -608,10 +667,12 @@ const Home:NextPage<Props> = (props) => {
                     <Box>
                     {renderBreadcrumbs()}
                     </Box>
-                    {algoritms[algorithm]?<Typography fontStyle={'italic'}>{algoritms[algorithm].name}: {algoritms[algorithm].description}</Typography>:undefined}
+                    {topics[topic]?<Typography fontStyle={'italic'}>{topics[topic].name}: {topics[topic].description}</Typography>:undefined}
                     <Divider sx={{margin:'.5em 0'}} />
                         <Box>
-                            <Map></Map>
+                            {dataMovilityAndEvents ? <MapMovilityAndEvents></MapMovilityAndEvents>:<></>}
+                            {dataDensityAndSubscribers ? <MapDensityAndSubscribers></MapDensityAndSubscribers>:<></>}
+
                         </Box>
                 </Box>
                 <Snackbar 
@@ -631,22 +692,41 @@ const Home:NextPage<Props> = (props) => {
     </Box>
 }
 export const getServerSideProps = async ()=>{
-    const mp = path.join(process.cwd(),'public','static','data','opal_synthetic','monthly.csv')
-    const wp = path.join(process.cwd(),'public','static','data','opal_synthetic','weekly.csv')
-    const yp = path.join(process.cwd(),'public','static','data','opal_synthetic','yearly.csv')
-    
-    const [monthly,weekly,yearly] = await Promise.all([
-        csv().fromFile(mp),
-        csv().fromFile(wp),
-        csv().fromFile(yp)  
+    const basePath = [process.cwd(),'public','static','data','opal_synthetic']
+
+    const mdsP = path.join(...basePath,'monthly','density_subscribers.csv')
+    const mmeP = path.join(...basePath,'monthly','mobility_events.csv')
+
+    const wdsP = path.join(...basePath,'weekly','density_subscribers.csv')
+    const wmeP = path.join(...basePath,'weekly','mobility_events.csv')
+
+    const ydsP = path.join(...basePath,'yearly','density_subscribers.csv')
+    const ymeP = path.join(...basePath,'yearly','mobility_events.csv')
+
+    const [mds,mme,wds,wme,yds,yme] = await Promise.all([
+        csv().fromFile(mdsP),
+        csv().fromFile(mmeP),
+        csv().fromFile(wdsP),
+        csv().fromFile(wmeP),  
+        csv().fromFile(ydsP),  
+        csv().fromFile(ymeP),  
     ])
     
     return {
         props:{
             data:{
-                monthly,
-                weekly,
-                yearly
+                monthly:{
+                    density_subscribers:mds,
+                    mobility_events:mme
+                },
+                weekly:{
+                    density_subscribers:wds,
+                    mobility_events:wme
+                },
+                yearly:{
+                    density_subscribers:yds,
+                    mobility_events:yme
+                }
             }
         }
     }

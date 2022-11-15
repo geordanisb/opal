@@ -1,7 +1,7 @@
 [
-  {"longitude":-157.826182, "latitude":21.30895, "id":15},
-  {"longitude":-84.5467, "latitude":42.7335, "id":26},
-  {"longitude":-97.75, "latitude":30.266667, "id":48},
-  {"longitude":-122.893077, "latitude":47.042418, "id":53},
-  {"longitude":-81.633294, "latitude":38.349497, "id":54}
+  {"longitude":-121.468926, "latitude":38.555605, "id":6,"label":"Cremont"},
+  {"longitude":-84.86311, "latitude":38.197274, "id":21,"label":"Portico"},
+  {"longitude":-97.75, "latitude":30.266667, "id":48,"label":"Metromic"},
+  {"longitude":-122.893077, "latitude":47.042418, "id":53,"label":"Stonewall"},
+  {"longitude":-93.620866, "latitude":41.590939, "id":19,"label":"Seabrook"}
 ]
