@@ -30,7 +30,8 @@ const useDrawMapMovilityAndEvents = (districtOut:string,districtIn:string,topic:
     if(canDraw()){
       const {width,height} = dimension
       let districts = [districtOut,districtIn];
-      let aggregate = 'mean'
+      const isEvent = ['call_out','sms_out'].includes(topic) 
+      let aggregate = isEvent ? 'sum' : 'mean'
       
       const colorDomain = {
         sms_out: [50e6,100e6,150e6,250e6,300e6],
@@ -102,22 +103,28 @@ const useDrawMapMovilityAndEvents = (districtOut:string,districtIn:string,topic:
             "projection": {"type": "albersUsa"},
             "mark": {
               type:"geoshape",
-              fill:'gainsboro'
+              ... !isEvent 
+                ? {fill:'gainsboro'}
+                : {}
             },
             "encoding": {
               "shape": {
                 "field": "geo",
                 "type": "geojson",
               },
-              // "color": {
-              //   "field": `${topic}`,
-              //   // type:"ordinal"
-              //   "type": "quantitative",
-              //   scale:{
-              //     // domain:colorDomain[topic],
-              //     range:['#c3ddf4','#6fa7db','#0e4d8b']
-              //   }
-              // },
+              ... isEvent
+              ? {
+                "color": {
+                  "field": `${topic}`,
+                  // type:"ordinal"
+                  "type": "quantitative",
+                  scale:{
+                    // domain:colorDomain[topic],
+                    range:['#c3ddf4','#6fa7db','#0e4d8b']
+                  }
+                },
+              }
+              :{},
               tooltip:[
                 {
                   field:'label',
@@ -169,22 +176,28 @@ const useDrawMapMovilityAndEvents = (districtOut:string,districtIn:string,topic:
             "projection": {"type": "albersUsa"},
             "mark": {
               type:"geoshape",
-              fill:'cadetblue'
+              ... !isEvent 
+                ? {fill:'cadetblue'}
+                : {}
             },
             "encoding": {
               "shape": {
                 "field": "geo",
                 "type": "geojson",
               },
-              // "color": {
-              //   "field": `${topic}`,
-              //   // type:"ordinal"
-              //   "type": "quantitative",
-              //   scale:{
-              //     // domain:colorDomain[topic],
-              //     range:['#c3ddf4','#6fa7db','#0e4d8b']
-              //   }
-              // },
+              ... isEvent 
+              ? {
+                "color": {
+                  "field": `${topic}`,
+                  // type:"ordinal"
+                  "type": "quantitative",
+                  scale:{
+                    // domain:colorDomain[topic],
+                    range:['#c3ddf4','#6fa7db','#0e4d8b']
+                  }
+                },
+              }
+              : {},
               tooltip:[
                 {
                   field:'label',
