@@ -703,14 +703,21 @@ export const getServerSideProps = async ()=>{
     const ydsP = path.join(...basePath,'yearly','density_subscribers.csv')
     const ymeP = path.join(...basePath,'yearly','mobility_events.csv')
 
-    const [mds,mme,wds,wme,yds,yme] = await Promise.all([
-        csv().fromFile(mdsP),
-        csv().fromFile(mmeP),
-        csv().fromFile(wdsP),
-        csv().fromFile(wmeP),  
-        csv().fromFile(ydsP),  
-        csv().fromFile(ymeP),  
-    ])
+    const mds = await csv().fromFile(mdsP)
+    const mme = await csv().fromFile(mmeP)
+    const wds = await csv().fromFile(wdsP)
+    const wme = await csv().fromFile(wmeP)  
+    const yds = await csv().fromFile(ydsP)  
+    const yme = await csv().fromFile(ymeP) 
+
+    // const [mds,mme,wds,wme,yds,yme] = await Promise.all([
+    //     csv().fromFile(mdsP),
+    //     csv().fromFile(mmeP),
+    //     csv().fromFile(wdsP),
+    //     csv().fromFile(wmeP),  
+    //     csv().fromFile(ydsP),  
+    //     csv().fromFile(ymeP),  
+    // ])
     
     return {
         props:{
