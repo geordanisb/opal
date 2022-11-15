@@ -3,9 +3,8 @@ import { Dimension } from '../types/dimension'
 import embed from 'vega-embed'
 
 import { Box } from '@mui/system'
-import { MonthlyMobilityEvent, Topic, WeeklyMobilityEvent, YearlyMobilityEvent } from '../types/Data'
+import { Topic } from '../types/Data'
 
-type Data = MonthlyMobilityEvent|WeeklyMobilityEvent|YearlyMobilityEvent
 const useDrawMapMovilityAndEvents = (districtOut:string,districtIn:string,topic:Topic,data:Record<string,any>[],doRender=false)=>{
   const [dimension,setDimensions] = useState<Dimension>()
 
@@ -103,28 +102,22 @@ const useDrawMapMovilityAndEvents = (districtOut:string,districtIn:string,topic:
             "projection": {"type": "albersUsa"},
             "mark": {
               type:"geoshape",
-              ... !isEvent 
-                ? {fill:'gainsboro'}
-                : {}
+              fill:'gainsboro'
             },
             "encoding": {
               "shape": {
                 "field": "geo",
                 "type": "geojson",
               },
-              ... isEvent
-              ? {
-                "color": {
-                  "field": `${topic}`,
-                  // type:"ordinal"
-                  "type": "quantitative",
-                  scale:{
-                    // domain:colorDomain[topic],
-                    range:['#c3ddf4','#6fa7db','#0e4d8b']
-                  }
-                },
-              }
-              :{},
+              // "color": {
+              //   "field": `${topic}`,
+              //   // type:"ordinal"
+              //   "type": "quantitative",
+              //   scale:{
+              //     // domain:colorDomain[topic],
+              //     range:['#c3ddf4','#6fa7db','#0e4d8b']
+              //   }
+              // },
               tooltip:[
                 {
                   field:'label',
@@ -176,28 +169,22 @@ const useDrawMapMovilityAndEvents = (districtOut:string,districtIn:string,topic:
             "projection": {"type": "albersUsa"},
             "mark": {
               type:"geoshape",
-              ... !isEvent 
-                ? {fill:'cadetblue'}
-                : {}
+              fill:'cadetblue'
             },
             "encoding": {
               "shape": {
                 "field": "geo",
                 "type": "geojson",
               },
-              ... isEvent 
-              ? {
-                "color": {
-                  "field": `${topic}`,
-                  // type:"ordinal"
-                  "type": "quantitative",
-                  scale:{
-                    // domain:colorDomain[topic],
-                    range:['#c3ddf4','#6fa7db','#0e4d8b']
-                  }
-                },
-              }
-              : {},
+              // "color": {
+              //   "field": `${topic}`,
+              //   // type:"ordinal"
+              //   "type": "quantitative",
+              //   scale:{
+              //     // domain:colorDomain[topic],
+              //     range:['#c3ddf4','#6fa7db','#0e4d8b']
+              //   }
+              // },
               tooltip:[
                 {
                   field:'label',

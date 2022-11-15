@@ -4,9 +4,8 @@ import { Dimension } from '../types/dimension'
 import embed from 'vega-embed'
 
 import { Box } from '@mui/system'
-import { MonthlyDensitySubscriber, Topic, WeeklyDensitySubscriber, YearlyDensitySubscriber } from '../types/Data'
+import { Topic } from '../types/Data'
 
-type Data = MonthlyDensitySubscriber|WeeklyDensitySubscriber|YearlyDensitySubscriber
 const useDrawMapDensityAndSubscribers = (district:string[],topic:Topic,data:Record<string,any>[],doRender=false)=>{
   const [dimension,setDimensions] = useState<Dimension>()
 

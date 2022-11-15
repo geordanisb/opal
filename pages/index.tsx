@@ -14,14 +14,17 @@ import { DistrictsMap } from '@/src/constants';
 import useDrawMapMovilityAndEvents from '@/src/hooks/useDrawMapMovilityAndEvents';
 import useDrawMapDensityAndSubscribers from '@/src/hooks/useDrawMapDensityAndSubscribers';
 
-const topics = {
-    movement:{name:'Mobility (Travels)',description:"Average number of antennas visited by subscribers for a specific timeframe, starting from district_one to district_two (the maximum number of cell towers the user could visit is 500)."},
-    density:{name:'Density',description:"The number of home-located subscribers (who pin the same antenna for a determined period of time during a day) divided by the km’2 for a given area within a specific timeframe."},
-    subscribers:{name:'Subscribers',description:"The active number of SIM cards registered with the mobile network operator (MNO) in a specific district within a period of time."},
-    call_out:{name:'Events calls',description:"The total number of calls sent by subscribers located in district_one to subscribers located in district_two (district one and two could be the same)"},
-    sms_out:{name:'Events SMSs',description:"The total number of SMSs sent by subscribers located in district_one to subscribers located in district_two (district one and two could be the same)"},
-
-  }
+const topics = (dout='',din='')=>{
+    const doutLbl = dout ? DistrictsMap[dout].label : 'district source'
+    const dinLbl = din ? DistrictsMap[din].label : 'district destiny'
+    return {
+        movement:{name:'Mobility (Travels)',description:`Average number of antennas visited by subscribers for a specific timeframe, starting from ${doutLbl} to ${dinLbl} (the maximum number of cell towers the user could visit is 500).`},
+        density:{name:'Density',description:"The number of home-located subscribers (who pin the same antenna for a determined period of time during a day) divided by the km’2 for a given area within a specific timeframe."},
+        subscribers:{name:'Subscribers',description:"The active number of SIM cards registered with the mobile network operator (MNO) in a specific district within a period of time."},
+        call_out:{name:'Events calls',description:`The total number of calls sent by subscribers located in ${doutLbl} to subscribers located in district_two (district one and two could be the same)`},
+        sms_out:{name:'Events SMSs',description:`The total number of SMSs sent by subscribers located in ${doutLbl} to subscribers located in district_two (district one and two could be the same)`},
+      }
+}
 const locations = {
 1:'District',
 2:'National',
@@ -99,11 +102,7 @@ const Home:NextPage<Props> = () => {
         if(periodType && topic){
             fn()
         }
-    },[periodType,topic])
-
-
-  const [dataMovilityAndEvents,setDataMovilityAndEvents] = useState<(MobilityEvent)[]>([])
-  const [dataDensityAndSubscribers,setDataDensityAndSubscribers] = useState<(DensitySubscriber)[]>([])
+    },[periodType,topic,district,districtIn,districtOut])
 
   const [loading,setLoading] = useState(false)
 
@@ -118,20 +117,20 @@ const Home:NextPage<Props> = () => {
 
   const [drawerShow,setDrawerShow] = useState(true) 
 
-  const onChangeAlgoritm = (e)=>{
+  const onChangeTopic = (e)=>{
     const v = e.target.value
     setTopic(v)
+    setPeriodType('weekly')
 
     setLocation(1)
+    setDistrictIn('')
+    setDistrictOut('')
     setDistrict([])
-    setPeriodType('weekly')
     setYears('')
     setMonths('')
     setWeekFrom('')
     setWeekTo('')
 
-    setDataMovilityAndEvents([]) 
-    setDataDensityAndSubscribers([]) 
 
   }
 
@@ -148,60 +147,42 @@ const Home:NextPage<Props> = () => {
         setDistrictIn('')   
         setDistrict(()=>[...districts])
     }
-    setDataDensityAndSubscribers([]) 
-    setDataMovilityAndEvents(()=>[])    
-
   }
 
   const onChangeDistrict = (e)=>{
     setDistrict(e.target.value)
     setDistrictIn('')
     setDistrictOut('')
-    setDataDensityAndSubscribers([]) 
-    setDataMovilityAndEvents(()=>[])    
   }
 
   const onChangeDistrictIn = (e)=>{
     setDistrictIn(e.target.value)
     setDistrict([])
-    setDataDensityAndSubscribers([]) 
-    setDataMovilityAndEvents([])    
   }
 
   const onChangeDistrictOut = (e)=>{
     setDistrictOut(e.target.value)
     setDistrict([])
     setDistrictIn('')
-    setDataDensityAndSubscribers([]) 
-    setDataMovilityAndEvents([])    
   }
 
   const onChangeYears = (e)=>{
     setYears(e.target.value)
     setMonths('')
-    setDataDensityAndSubscribers([]) 
-    setDataMovilityAndEvents(()=>[])    
   }
 
   const onChangeMonths = (e)=>{
     setMonths(e.target.value)
     setWeekFrom('')
     setWeekTo('')
-
-    setDataDensityAndSubscribers([]) 
-    setDataMovilityAndEvents(()=>[])    
   }
 
   const onChangeWeekFrom = (e)=>{
     setWeekFrom(e.target.value)
-    setDataDensityAndSubscribers([]) 
-    setDataMovilityAndEvents(()=>[])    
   }
 
   const onChangeWeekTo = (e)=>{
     setWeekTo(e.target.value)
-    setDataDensityAndSubscribers([]) 
-    setDataMovilityAndEvents(()=>[])    
   }
 
   const validDates = ()=>{
@@ -226,17 +207,18 @@ const Home:NextPage<Props> = () => {
     setMonths('')
     setWeekFrom('')
     setWeekTo('')
-    setDataDensityAndSubscribers([]) 
-    setDataMovilityAndEvents([])
+    setData([]) 
   }
 
   const isMobilityOrEvent = ()=>['movement','call_out','sms_out'].includes(topic) 
 
 
-  const submit =  async (e)=>{debugger;
+  const submit =  async (e)=>{
     e.preventDefault()
+    if(!data || !data.length)return;
+
     setLoading(true)
-    let d = data
+    let d = [...data]
 
     if(periodType == 'weekly' && weekFrom&&weekTo){
         const date_from = moment(weekFrom.split('-')[0],'DD-MM-YYYY')
@@ -274,20 +256,23 @@ const Home:NextPage<Props> = () => {
         d = d.filter(i=>district.includes(i.district_in))
     
     if(isMobilityOrEvent()){
-        // setDataMovilityAndEvents(d)
         setData(d)
         setDoRenderMovilityAndEvents(true)
         setDoRenderDensityAndSubscribers(false)
-
     }
     else{
-        // setDataDensityAndSubscribers(d)
         setData(d)
         setDoRenderMovilityAndEvents(false)
         setDoRenderDensityAndSubscribers(true)
     }
     setLoading(false)
-    d && d.length ? setDrawerShow(false):setDrawerShow(true)
+
+    if(d && d.length ){
+        setDrawerShow(false)
+    }
+    else 
+        setDrawerShow(true);
+
   }
 
   const toggleDrawer = (event: React.KeyboardEvent | React.MouseEvent) => {
@@ -301,8 +286,8 @@ const Home:NextPage<Props> = () => {
       setDrawerShow(s=>!s);
     };
 
-    const renderAlgoritmMenuItems = ()=>{
-        return Object.entries(topics).map(([k,v])=>{
+    const renderTopicMenuItems = ()=>{
+        return Object.entries(topics()).map(([k,v])=>{
             return <MenuItem key={k} value={k}>{v.name}</MenuItem>
         })
     }
@@ -312,11 +297,13 @@ const Home:NextPage<Props> = () => {
     }
 
     const renderMonthsMenuItems = ()=>{
-        if(data && data.length){
+        if(data && data.length && periodType=='monthly'){
             let months = data.map(d=>d.date)
             
-            if(years)
+            if(years){
+// debugger;
                 months = months.filter(i=>years.includes(i.split('-')[0]))
+            }
             months =  Array.from(new Set(months))
     
             return months.map(y=><MenuItem key={y} value={`${y}`}>{y}</MenuItem>)
@@ -380,7 +367,7 @@ const Home:NextPage<Props> = () => {
         }
         return <Breadcrumbs aria-label="breadcrumb" separator={<NavigateNext/>}>
             <Typography fontWeight={'bold'}>Dataland</Typography>
-            {topics[topic]?<Typography fontWeight={'bold'}>{topics[topic].name}</Typography>:undefined}
+            {topics(districtOut,districtIn)[topic]?<Typography fontWeight={'bold'}>{topics(districtOut,districtIn)[topic].name}</Typography>:undefined}
             {locations[location]?<Typography fontWeight={'bold'}>{locations[location]} {renderDistricts()}</Typography>:undefined}
             
             {renderDateBreadcrumb()}
@@ -392,7 +379,7 @@ const Home:NextPage<Props> = () => {
         if(location == 1){
             const boths = isMobilityOrEvent()
             const din = <Box marginTop={'.5em'}>
-            <Typography variant='body2' fontWeight={'bold'} marginBottom='1em'>District In*</Typography>
+            <Typography variant='body2' fontWeight={'bold'} marginBottom='1em'>Source district*</Typography>
             <FormControl fullWidth>
             <InputLabel id="disctrict-in-lbl">District</InputLabel>
             <Select
@@ -414,7 +401,7 @@ const Home:NextPage<Props> = () => {
         </FormControl>
             </Box>
             const dout = <Box marginTop={'.5em'}>
-            <Typography variant='body2' fontWeight={'bold'} marginBottom='1em'>District Out*</Typography>
+            <Typography variant='body2' fontWeight={'bold'} marginBottom='1em'>Destination district*</Typography>
             <FormControl fullWidth>
             <InputLabel id="disctrict-out-lbl">District</InputLabel>
             <Select
@@ -565,7 +552,7 @@ const Home:NextPage<Props> = () => {
 
     const onChangePeriodType = (e)=>{
         setPeriodType(e.target.value)
-        // setDataMovilityAndEvents(()=>props.data[e.target.value])
+        setData([])
     }
 
     return <Box>
@@ -601,16 +588,16 @@ const Home:NextPage<Props> = () => {
                                 labelId="select-topic"
                                 value={topic}
                                 label="Select the topic you want to explore."
-                                onChange={onChangeAlgoritm}
+                                onChange={onChangeTopic}
                                 >
-                                    {renderAlgoritmMenuItems()}
+                                    {renderTopicMenuItems()}
                                 </Select>
                             </FormControl>
                         </Box>
                         <Box marginTop={'.5em'}>
-                            <Typography variant='body2' fontWeight={'bold'} marginBottom='1em'>Location*</Typography>
+                            <Typography variant='body2' fontWeight={'bold'} marginBottom='1em'>Geographical granularity*</Typography>
                             <FormControl fullWidth>
-                                <InputLabel id="select-mark">Select the geographical granularity.</InputLabel>
+                                <InputLabel id="select-mark">Select the desired level of granularity.</InputLabel>
                                 <Select
                                 labelId="select-mark"
                                 value={location}
@@ -665,12 +652,11 @@ const Home:NextPage<Props> = () => {
                     <Box>
                     {renderBreadcrumbs()}
                     </Box>
-                    {topics[topic]?<Typography fontStyle={'italic'}>{topics[topic].name}: {topics[topic].description}</Typography>:undefined}
+                    {topics(districtOut,districtIn)[topic]?<Typography fontStyle={'italic'}>{topics(districtOut,districtIn)[topic].name}: {topics(districtOut,districtIn)[topic].description}</Typography>:undefined}
                     <Divider sx={{margin:'.5em 0'}} />
                         <Box>
-                            {dataMovilityAndEvents ? <MapMovilityAndEvents></MapMovilityAndEvents>:<></>}
-                            {dataDensityAndSubscribers ? <MapDensityAndSubscribers></MapDensityAndSubscribers>:<></>}
-
+                            {(data && data.length) && doRenderMovilityAndEvents ? <MapMovilityAndEvents></MapMovilityAndEvents>:<></>}
+                            {(data && data.length) && doRenderDensityAndSubscribers ? <MapDensityAndSubscribers></MapDensityAndSubscribers>:<></>}
                         </Box>
                 </Box>
                 <Snackbar 
