@@ -94,11 +94,9 @@ const Home:NextPage<Props> = () => {
     useEffect(()=>{
         const fn = async ()=>{
             const {data:d} = await fetchData();
-            debugger;
             if(d)setData(d)
         }
         if(periodType && topic){
-            debugger;
             fn()
         }
     },[periodType,topic])
@@ -277,17 +275,19 @@ const Home:NextPage<Props> = () => {
     
     if(isMobilityOrEvent()){
         // setDataMovilityAndEvents(d)
+        setData(d)
         setDoRenderMovilityAndEvents(true)
         setDoRenderDensityAndSubscribers(false)
 
     }
     else{
         // setDataDensityAndSubscribers(d)
+        setData(d)
         setDoRenderMovilityAndEvents(false)
         setDoRenderDensityAndSubscribers(true)
     }
     setLoading(false)
-    data && data.length ? setDrawerShow(false):setDrawerShow(true)
+    d && d.length ? setDrawerShow(false):setDrawerShow(true)
   }
 
   const toggleDrawer = (event: React.KeyboardEvent | React.MouseEvent) => {
