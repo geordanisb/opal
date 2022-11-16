@@ -1,19 +1,10 @@
 export const DistrictsMap = {
-    6:{label:'Cremont',state:'California',id:6},
-    21:{label:'Portico',state:'Kentucky',id:21},
+    23:{label:'Cremont',state:'Maine',id:23},
+    26:{label:'Portico',state:'Michigan',id:26},
+    45:{label:'Stonewall',state:'South Carolina',id:45},
     48:{label:'Metromic',state:'Texas',id:48},
-    53:{label:'Stonewall',state:'Washington',id:53},
-    19:{label:'Seabrook',state:'Iowa',id:19}
+    54:{label:'Seabrook',state:'West Virginia',id:54},
 }
-
-/**
- * 
- * Male -----> Cremont
-Maafushi-----> Portico
-Naifaru ---->  Metromic
-Baros ---->  Stonewall
-Fuvahmulah ----> Seabrook
- */
 
 export const AlgoritmFieldsMap = {
     movement:['movement'],
