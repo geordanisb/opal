@@ -27,7 +27,7 @@ const topics = (dout='',din='')=>{
 }
 const locations = {
 1:'District',
-2:'National',
+// 2:'National',
 }
 // const columns = [
 //     {field:'date_from',headerName:'date_from',width:110,
@@ -545,7 +545,7 @@ const Home:NextPage<Props> = () => {
 
     const renderLocationMenuItems = ()=>{
         let l = {...locations};
-        if(isMobilityOrEvent())
+        if(isMobilityOrEvent() && l[2])
             delete l[2]
         return Object.entries(l).map(([k,v,])=><MenuItem value={k} key={k}>{v}</MenuItem>)
     }
